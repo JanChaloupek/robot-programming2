@@ -7,12 +7,13 @@ from directions import DirectionEnum
 from tempomat import Tempomat
 from velocity import Velocity
 from senzors import Senzors
+from position import Point
 from sonar import Sonar
 from timer import Timer
 
 class Robot:
     # Základní třída s robotem
-    def __init__(self, robotDiameter:float, wheelDiameter:float, ticksPerCircle:int, calibrateFactors:list[CalibrateFactors]):
+    def __init__(self, robotDiameter:float, wheelDiameter:float, ticksPerCircle:int, calibrateFactors:list[CalibrateFactors]) -> None:
         velocity = Velocity()
         i2c.init(freq=400_000)
         # senzory (vcetne ultrazvuku)
@@ -133,7 +134,7 @@ class Robot:
         # vrat situaci sledovani cary
         return self.__senzors.getSituationLine()
 
-    def update(self):
+    def update(self) -> None:
         # aktualizuj subsystemy
         self.motionControl.update()
         self.lightsControl.update()
@@ -196,7 +197,7 @@ class Robot:
         # porad nejsme natoceni spravne
         return False
 
-    def follow(self, point, forward):
+    def follow(self, point:Point, forward:bool) -> tuple[bool, bool]:
         time = ticks_ms()
         if forward:
             run = self.__regulatorFollow.isTime(time)

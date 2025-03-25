@@ -6,7 +6,7 @@ class Sonar(Period):
     MAX_DISTANCE = 1
     LIMIT = 5
 
-    def __init__(self, timeout_ms=100):
+    def __init__(self, timeout_ms=100) -> None:
         super().__init__(timeout_ms)
         self.__historyDistancies = [0] * self.LIMIT
         self.__index = 0
@@ -18,7 +18,7 @@ class Sonar(Period):
         self.lastDistance = None
         self.measureAndUseNewDistance()
 
-    def measureDistance(self):
+    def measureDistance(self) -> float|int:
         # změř a vrať vzdálenost k překážce
         speed = 340    # m/s
         self.__trigger.write_digital(1)

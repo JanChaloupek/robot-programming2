@@ -2,7 +2,7 @@ from HardwarePlatform import ticks_ms, ticks_diff
 
 class Timer:
     # třída implementující casovac
-    def __init__(self, timeout_ms:int=None, startTimer:bool=True):
+    def __init__(self, timeout_ms:int=None, startTimer:bool=True) -> None:
         self.timeout_ms = timeout_ms
         if startTimer:
             self.startTimer()

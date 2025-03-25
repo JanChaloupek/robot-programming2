@@ -8,7 +8,7 @@ from position import Odometry
 
 class Wheel:
     # Třída implementující motor
-    def __init__(self, place:int, radius:float, tickPerCircle: int, calibrateFactors:CalibrateFactors):
+    def __init__(self, place:int, radius:float, tickPerCircle: int, calibrateFactors:CalibrateFactors) -> None:
         self.__place = place
         self.__encoder = Encoder(place, tickPerCircle, radius)
         self.__pwmRegulator = RegulatorP(p=12, timeout_ms=500)
@@ -24,18 +24,12 @@ class Wheel:
         elif place == DirectionEnum.LEFT:
             self.__pwmNo_Back = 4
             self.__pwmNo_Forw = 5
-        self.initMotor()
 
-    def isStopped(self):
+    def isStopped(self) -> bool:
         # je detekováno, že (asi) stojíme?
         return self.__encoder.isStopped()
 
-    def initMotor(self) -> None:
-        # inicializuj pwn driver pro motor
-        i2c.write(I2C_ADDR_MOTION, bytes([0xE8, 0xAA]))
-        i2c.write(I2C_ADDR_MOTION, bytes([0x00, 0x01]))
-
-    def writePWM(self, pwm:int):
+    def writePWM(self, pwm:int) -> None:
         # omezeni pwm (zapisujeme 1 byte = maximalne 255 ve spravnem smeru)
         if pwm > 255:
             pwm = 255
@@ -57,19 +51,19 @@ class Wheel:
             i2c.write(I2C_ADDR_MOTION, bytes([pwmNo_off, 0]))
             i2c.write(I2C_ADDR_MOTION, bytes([pwmNo_on, abs(pwm)]))
 
-    def stop(self):
+    def stop(self) -> None:
         # bezpečnostní odstavení motorů
         self.__angularSpeed = 0.0
         self.writePWM(0)
 
-    def getOdometryTicks(self):
+    def getOdometryTicks(self) -> int:
         return self.__encoder.getOdometryTicks()
 
-    def getMinimumForwardSpeed(self):
+    def getMinimumForwardSpeed(self) -> float:
         # dej mi minimální doprednou rychlost kola robota z kalibrace kol
         return self.__calibrateFactors.minimumAngularSpeed * self.__radius
 
-    def __calculateAngularSpeed(self, forwardSpeed):
+    def __calculateAngularSpeed(self, forwardSpeed) -> float:
         # spočti uhlovou rychlost kola v rad/s z dopredne rychlosti v m/s
         return forwardSpeed / self.__radius
 
@@ -79,7 +73,7 @@ class Wheel:
         pwm = self.__calibrateFactors.calculatePwm(self.__angularSpeed)
         self.ridePwm(pwm)
 
-    def __checkMinimumPwm(self, pwm):
+    def __checkMinimumPwm(self, pwm) -> int:
         minPwm = self.__calibrateFactors.getMinimumPwm(self.isStopped())
         if abs(pwm) < minPwm:
             if pwm < 0:
@@ -88,22 +82,22 @@ class Wheel:
             return minPwm
         return pwm
 
-    def ridePwm(self, pwm:int):
+    def ridePwm(self, pwm:int) -> None:
         if pwm != 0.0:   # pokud máme NEnulovou rychlost, tak vyřeš minimální hodnoty pwm
             pwm = self.__checkMinimumPwm(pwm)
         self.writePWM(pwm)
 
-    def __changePwm(self, changeValue:float):
+    def __changePwm(self, changeValue:float) -> None:
         # změn pwm o tuto hodnotu
         # if self.__place == DirectionEnum.LEFT:
         #     print(self.__pwm,'+',changeValue,'=',round(self.__pwm + changeValue))
-        return self.ridePwm(round(self.__pwm + changeValue))
+        self.ridePwm(round(self.__pwm + changeValue))
 
-    def getSpeed(self, unit:int, count=5, offset=0):
+    def getSpeed(self, unit:int, count=5, offset=0) -> float:
         # dej mi zmerenou rychlost kola v teto jednotce
         return self.__encoder.getSpeed(unit, count, offset)
 
-    def regulatePwm(self, startRegulate:bool=False, stopRegulate:bool=False):
+    def regulatePwm(self, startRegulate:bool=False, stopRegulate:bool=False) -> None:
         if startRegulate:
             if not self.__pwmRegulator.isStarted():
                 self.__pwmRegulator.startTimer()
@@ -128,12 +122,12 @@ class Wheel:
         self.__encoder.update(isForward = self.__pwm >= 0)
         self.regulatePwm()
 
-    def calibrate_init(self):
+    def calibrate_init(self) -> None:
         self.__minSpeed = 0
         self.__minPwmStop = -1
         self.__minPwmMotion = -1
 
-    def calibrate_updateMinimumStop(self, speed, pwm):
+    def calibrate_updateMinimumStop(self, speed:float, pwm:int) -> None:
         if speed == 0.0:
             self.__minPwmStop = None
             self.__minSpeed = 0.0
@@ -141,14 +135,14 @@ class Wheel:
             self.__minPwmStop = abs(pwm)
             self.__minSpeed = abs(speed)
         
-    def calibrate_updateMinimumMotion(self, speed, pwm):
+    def calibrate_updateMinimumMotion(self, speed:float, pwm:int) -> None:
         if speed != 0.0:
             self.__minPwmMotion = abs(pwm)
 
-    def getMinimumPwmStop(self):
+    def getMinimumPwmStop(self) -> int:
         return self.__minPwmStop
 
-    def createCalibrateFactors(self, speed, pwm):
+    def createCalibrateFactors(self, speed:float, pwm:int):
         speed = abs(speed)
         speedDiff = speed - self.__minSpeed
         pwmDiff = pwm - self.__minPwmStop
@@ -158,10 +152,16 @@ class Wheel:
 
 class Wheels:
     # Třída implementující motory diferenciálního podvozku
-    def __init__(self, halfWheelbase:float, wheelRadius:float, ticksPerCircle:int, calibrates:list[CalibrateFactors]):
+    def __init__(self, halfWheelbase:float, wheelRadius:float, ticksPerCircle:int, calibrates:list[CalibrateFactors]) -> None:
         self.__wheelLeft  = Wheel(DirectionEnum.LEFT , wheelRadius, ticksPerCircle, calibrates[0])
         self.__wheelRight = Wheel(DirectionEnum.RIGHT, wheelRadius, ticksPerCircle, calibrates[1])
         self.__halfWheelbase = halfWheelbase
+        self.initMotor()
+
+    def initMotor(self) -> None:
+        # inicializuj pwn driver pro motor
+        i2c.write(I2C_ADDR_MOTION, bytes([0xE8, 0xAA]))
+        i2c.write(I2C_ADDR_MOTION, bytes([0x00, 0x01]))
 
     def stop(self) -> None:
         self.__wheelLeft.stop()
@@ -182,37 +182,37 @@ class Wheels:
             #TODO: zde by asi mělo být odpojení motorů od napájení (zatím to neumíme)
             raise ex
 
-    def getMinimumSpeed(self):
+    def getMinimumSpeed(self) -> float:
         # dej mi minimální rychlost robota z kalibračních hodnot
         minimumLeft = self.__wheelLeft.getMinimumForwardSpeed()
         minimumRight = self.__wheelRight.getMinimumForwardSpeed()
         return max(minimumLeft, minimumRight)
     
-    def getSpeed(self, unit: int) -> tuple[float, float]:
+    def getSpeed(self, unit: int) -> list[float]:
         return [
             self.__wheelLeft.getSpeed(unit),
             self.__wheelRight.getSpeed(unit),
         ]
 
-    def getOdometryTicks(self):
+    def getOdometryTicks(self) -> list[int]:
         return [
             self.__wheelLeft.getOdometryTicks(),
             self.__wheelRight.getOdometryTicks(),
         ]
         
-    def stopRegulatePwm(self):
+    def stopRegulatePwm(self) -> None:
         self.__wheelLeft.regulatePwm(stopRegulate=True)
         self.__wheelRight.regulatePwm(stopRegulate=True)
 
-    def startRegulatePwm(self):
+    def startRegulatePwm(self) -> None:
         self.__wheelLeft.regulatePwm(startRegulate=True)
         self.__wheelRight.regulatePwm(startRegulate=True)
 
-    def update(self):
+    def update(self) -> None:
         self.__wheelLeft.update()
         self.__wheelRight.update()
 
-    def rideSpeed(self, forward: float, angular: float):
+    def rideSpeed(self, forward:float, angular:float) -> None:
         # kinematika diferencionalniho podvozku
         self.__wheelLeft.rideSpeed(forward - self.__halfWheelbase * angular)
         self.__wheelRight.rideSpeed(forward + self.__halfWheelbase * angular)
@@ -224,19 +224,19 @@ class Wheels:
     def getMinimumPwmStop(self) -> int:
         return max(self.__wheelLeft.getMinimumPwmStop(), self.__wheelRight.getMinimumPwmStop())
     
-    def __calibrate_updateMinimumStop(self, speeds:list[float], pwm):
+    def __calibrate_updateMinimumStop(self, speeds:list[float], pwm:int) -> None:
         self.__wheelLeft.calibrate_updateMinimumStop(speeds[0], pwm)
         self.__wheelRight.calibrate_updateMinimumStop(speeds[1], pwm)
 
-    def __calibrate_updateMinimumMotin(self, speeds:list[float], pwm):
+    def __calibrate_updateMinimumMotin(self, speeds:list[float], pwm:int) -> None:
         self.__wheelLeft.calibrate_updateMinimumMotion(speeds[0], pwm)
         self.__wheelRight.calibrate_updateMinimumMotion(speeds[1], pwm)
 
-    def __createCalibrateFactors(self, speeds:list[float], pwm:list[int]):
+    def __createCalibrateFactors(self, speeds:list[float], pwm:list[int]) -> None:
         self.__wheelLeft.createCalibrateFactors(speeds[0], pwm[0])
         self.__wheelRight.createCalibrateFactors(speeds[1], pwm[1])
 
-    def __printCalibrateFactors(self):
+    def __printCalibrateFactors(self) -> None:
         print(str(self.__wheelLeft.__calibrateFactors))
         print(str(self.__wheelRight.__calibrateFactors))
 
@@ -291,7 +291,7 @@ class Wheels:
 
 class MotionControl:
     # Třída implementující kinematiku robota
-    def __init__(self, wheelbase:float, wheelDiameter:float, ticksPerCircle:int, velocity:Velocity, calibrateFactors:list[CalibrateFactors]):
+    def __init__(self, wheelbase:float, wheelDiameter:float, ticksPerCircle:int, velocity:Velocity, calibrateFactors:list[CalibrateFactors]) -> None:
         self.__wheelRadius = wheelDiameter / 2
         self.__wheels = Wheels(wheelbase / 2, self.__wheelRadius, ticksPerCircle, calibrateFactors)
         self.velocity = velocity
@@ -330,22 +330,22 @@ class MotionControl:
         self.velocity.angular = angular
         self.__wheels.rideSpeed(forward, angular)   
 
-    def update(self):
+    def update(self) -> None:
         self.__wheels.update()
         self.odometry_update()
 
-    def odometry_update(self):
+    def odometry_update(self) -> None:
         time_ms = ticks_ms()
         if self.odometry.isTimeout(time_ms):
             # už je čas znovu spočítat odometrii
             self.odometry_recalculate(time_ms)
     
-    def odometry_recalculate(self, time_ms:int=None):
+    def odometry_recalculate(self, time_ms:int=None) -> None:
         # spočítej pozici odometrie (ze změny tiků levého a pravého kola)
         self.odometry.odometry_calculate(self.__wheels.getOdometryTicks())
         self.odometry.odometry_startTimer(time_ms)
 
-    def odometry_reinit(self):
+    def odometry_reinit(self) -> None:
         # vycti zbytky tiků po predchozim pohybu a nastartuj časovač výpočtu odometrie
         self.odometry_recalculate()
         # nastav pozici na init hodnoty

@@ -1,7 +1,7 @@
 
 class CalibrateFactors:
     # třída pro uložení kalibračních hodnot pro motor
-    def __init__(self, minimumAngularSpeed:float, minPwm_WhenStopped:int, minPwm_InMotion:int, a:float, b:float):
+    def __init__(self, minimumAngularSpeed:float, minPwm_WhenStopped:int, minPwm_InMotion:int, a:float, b:float) -> None:
         self.minimumAngularSpeed = minimumAngularSpeed
         self.__minPwm_WhenStopped = minPwm_WhenStopped
         self.__minPwm_InMotion = minPwm_InMotion
@@ -25,5 +25,5 @@ class CalibrateFactors:
         else:
             return self.__minPwm_InMotion
 
-    def __str__(self):
-        print("a=",self.__a,"b=",self.__b,"minSpeed=",self.minimumAngularSpeed,"minPwmStopped=",self.__minPwm_WhenStopped,"minPwmMotin=",self.__minPwm_InMotion)
+    def __str__(self) -> str:
+        return "a="+str(self.__a)+" b="+str(self.__b)+" minSpeed="+str(self.minimumAngularSpeed)+" minPwmStopped="+str(self.__minPwm_WhenStopped)+" minPwmMotin="+str(self.__minPwm_InMotion)

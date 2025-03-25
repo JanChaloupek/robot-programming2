@@ -10,13 +10,13 @@ class System:
     redrawNeeded = None
 
     @classmethod
-    def initialize(cls):
+    def initialize(cls) -> None:
         print('System.initialize')
         cls.pixelsMap = [bytearray(cls.colsDisp) for _ in range(cls.rowsDisp)]
         cls.redrawNeeded = [[True for _ in range(cls.colsDisp)] for _ in range(cls.rowsDisp)]
 
     @staticmethod
-    def display_pixel(col, row, color):
+    def display_pixel(col:int, row:int, color:int) -> None:
         if 0 <= col < System.colsDisp:
             if 0 <= row < System.rowsDisp:
                 oldColor = System.pixelsMap[row][col]
@@ -26,7 +26,7 @@ class System:
     __currectCol = 0
     __currectRow = 0
     @staticmethod
-    def updatePixels():
+    def updatePixels() -> None:
         System.updatePixel()
         System.updatePixel()
         System.updatePixel()
@@ -123,7 +123,7 @@ class System:
         return 0.00898 * pin2.read_analog() 
 
     @staticmethod
-    def display_SupplyVoltage():
+    def display_SupplyVoltage() -> None:
         print("Supply")
         voltage = System.getSupplyVoltage()
         powerSupply = "{:1.1f} V".format(voltage)
@@ -135,7 +135,7 @@ class System:
         System.display_iconC(powerSupply[4])
 
     @staticmethod
-    def __display_bitmap(x_pos: int, y_pos: int, width: int, lines: list[int]):
+    def __display_bitmap(x_pos: int, y_pos: int, width: int, lines: list[int]) -> None:
         hight = len(lines)
         for iy in range(hight):
             line = lines[iy]
@@ -147,53 +147,53 @@ class System:
                 System.display_pixel(x, y, color)
 
     @staticmethod
-    def display_clear():
+    def display_clear() -> None:
         display.fill(0)
         for row in System.pixelsMap:
             for col in range(len(row)):
                 row[col] = 0
 
     @staticmethod
-    def display_decimalPoint(show:bool, x_poz:int, y_poz:int=0, color:int=9):
+    def display_decimalPoint(show:bool, x_poz:int, y_poz:int=0, color:int=9) -> None:
         System.display_pixel(x_poz, y_poz, color if show else 0)
 
     @staticmethod
-    def __display_iconA(icon: str):
+    def __display_iconA(icon: str) -> None:
         System.__display_bitmap(11, 0, 5, System.__PICTOGRAMS[icon])
 
     @staticmethod
-    def display_decimalPointAfterA(show:bool):
+    def display_decimalPointAfterA(show:bool) -> None:
         System.display_decimalPoint(show, 11)
 
     @staticmethod
-    def __display_iconB(icon: str):
+    def __display_iconB(icon: str) -> None:
         System.__display_bitmap(6, 0, 5, System.__PICTOGRAMS[icon])
 
     @staticmethod
-    def display_decimalPointAfterB(show: bool):
+    def display_decimalPointAfterB(show: bool) -> None:
         System.display_decimalPoint(show, 6)
 
     @staticmethod
-    def __display_iconC(icon: str):
+    def __display_iconC(icon: str) -> None:
         System.__display_bitmap(1, 0, 5, System.__PICTOGRAMS[icon])
 
     @staticmethod
-    def display_decimalPointAfterC(show: bool):
+    def display_decimalPointAfterC(show: bool) -> None:
         System.display_decimalPoint(show, 1)
 
     @staticmethod
-    def display_drive_mode(mode: str):
+    def display_drive_mode(mode: str) -> None:
         System.__display_iconB(mode)
 
     @staticmethod
-    def display_position(x: int, y: int):
+    def display_position(x: int, y: int) -> None:
         x_char = str(min(9, int(x)))
         y_char = str(min(9, int(y)))
         System.__display_iconA(x_char)
         System.__display_iconC(y_char)
 
     @staticmethod
-    def display_senzors(obstacleLeft:bool, farLeft:bool, left:bool, midleLeft:bool, midle35:bool, midleRight:bool, right:bool, farRight:bool, obstacleRight:bool, bh:int, bl:int):
+    def display_senzors(obstacleLeft:bool, farLeft:bool, left:bool, midleLeft:bool, midle35:bool, midleRight:bool, right:bool, farRight:bool, obstacleRight:bool, bh:int, bl:int) -> None:
         System.display_pixel(16, 6, bh if obstacleLeft   else bl)
 
         if farLeft is not None:

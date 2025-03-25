@@ -14,26 +14,26 @@ class BeamsEnum:
 
 class IndicatorState(Timer):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout_ms=400)
         self.reset() 
 
-    def set(self, value:int):
+    def set(self, value:int) -> None:
         self.value: int = value
         self.startTimer()
 
-    def reset(self):
+    def reset(self) -> None:
         self.set(None)
 
-    def isDifferent(self, other:int):
+    def isDifferent(self, other:int) -> bool:
         # je hodnota stavu rozdílná od předané?
         return self.value != other
 
-    def __change_Light_Space(self):
+    def __change_Light_Space(self) -> None:
         # změn stav blinkru
         self.set(IndicatorStateEnum.SPACE if self.value == IndicatorStateEnum.LIGHT else IndicatorStateEnum.LIGHT)
 
-    def changeState(self):
+    def changeState(self) -> None:
         if self.value is not None:
             # jestli blinkr uz blikal, pockej na timeout a zmen stav
             if self.isTimeout():
@@ -51,7 +51,7 @@ class Lights(Timer):
     color_led_red = (60, 0, 0)
     color_led_red_br = (255, 0, 0)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout_ms=100)
         self.__neopixels = NeoPixel(pin0, 8)
 
@@ -64,7 +64,7 @@ class Lights(Timer):
         for ledNo in ledList:
             self.setColorToOneLed(ledNo, color)
 
-    def showColor(self):
+    def showColor(self) -> None:
         # zapiš nastavené barvy do led-ek
         self.__neopixels.write()
 
@@ -80,7 +80,7 @@ class LightsControl:
     inside_light = (0, 3, 5, 6)
     reverse_lights = (5,)
 
-    def __init__(self, velocity:Velocity):
+    def __init__(self, velocity:Velocity) -> None:
         self.__lights = Lights()
         self.__indicatorState = IndicatorState()
         self.__oldForward = 0.0
@@ -104,11 +104,11 @@ class LightsControl:
         # maji blikat prave blinkry?
         return self.indicator == DirectionEnum.RIGHT or self.warning
 
-    def setReverseFromVelocity(self):
+    def setReverseFromVelocity(self) -> None:
         # spočti zapnutí couvacího světla z rychlosti robota
         self.__isReverse = self.__velocity.forward < 0.0
 
-    def setBrakeFromVelocity(self):
+    def setBrakeFromVelocity(self) -> None:
         # spočti brzdové světlo z požadované dopředné rychlosti robota
         if self.__velocity.forward == 0.0 and self.__oldForward != 0.0:
             # pokud mame zastavit ale predtim jsme jeli => brzdime
@@ -116,7 +116,7 @@ class LightsControl:
             self.__brakeTimer.startTimer()
         self.__oldForward = self.__velocity.forward
 
-    def isBrake(self):
+    def isBrake(self) -> bool:
         # má svítit brzdové světlo?
         if self.__isBrake:
             if not self.__brakeTimer.isTimeout(timeout_ms=600):
@@ -124,7 +124,7 @@ class LightsControl:
             self.__isBrake = False
         return False
 
-    def setColorIndicator(self):
+    def setColorIndicator(self) -> None:
         # nastav stavy blinkrovych svetel
         if self.__indicatorState.value == IndicatorStateEnum.LIGHT:
             if self.leftIndicatorIsBlink():
@@ -134,7 +134,7 @@ class LightsControl:
         else:
             self.__lights.setColor(self.ind_all, Lights.color_led_off)
 
-    def setColorOtherLights(self):
+    def setColorOtherLights(self) -> None:
         # nastav barvy prednich a zadnich svetel (ne blinkru)
         headColor = Lights.color_led_off
         backColor = Lights.color_led_off
@@ -154,7 +154,7 @@ class LightsControl:
         if self.__isReverse:
             self.__lights.setColor(self.reverse_lights, Lights.color_led_white)
 
-    def updateIndicatorState(self):
+    def updateIndicatorState(self) -> None:
         # aktualizace stavu blinkru
         if self.indicatorsIsBlink():
             # blinkry mají blikat, tak měn stav = blikej
@@ -163,7 +163,7 @@ class LightsControl:
             # blinkry mají být zhasnuté
             self.__indicatorState.reset()
 
-    def update(self):
+    def update(self) -> None:
         self.setReverseFromVelocity()
         self.setBrakeFromVelocity()
 

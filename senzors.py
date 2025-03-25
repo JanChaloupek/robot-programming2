@@ -30,7 +30,7 @@ class Senzors(Timer):
     LT_LeftCross3 = LT_Left | LT_Central
     LT_All = 0x9F
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout_ms=50)
         self.__data = -1
         self.senzorDataUpdate()
@@ -95,7 +95,7 @@ class Senzors(Timer):
         return self.getData(senzor) != senzor
     
 
-    def update(self):
+    def update(self) -> None:
         time = ticks_ms()
         if self.isTimeout(time):
             self.senzorDataUpdate(time)

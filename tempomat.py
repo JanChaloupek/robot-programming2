@@ -30,7 +30,7 @@ class  Tempomat:
                 time, -self.distance, -actualDistance
             )
 
-    def calculateSpeed(self, actualDistance: float) -> None|float:
+    def calculateSpeed(self, actualDistance: float) -> float:
         if self.isActivate():
             # tempomat je aktivovan (má nastavenou vzdálenost, kterou ma udržovat)
             time = ticks_ms()

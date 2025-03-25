@@ -9,7 +9,7 @@ class MainSM(AbstractSM):
         Task()
     ]
 
-    def __init__(self, robot: Robot, tasks, tick_time=None):
+    def __init__(self, robot: Robot, tasks, tick_time=None) -> None:
         self.__robot = robot
         super().__init__(tasks, tick_time)
 

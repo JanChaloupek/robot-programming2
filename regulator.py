@@ -2,7 +2,7 @@ from timer import Period
 
 class RegulatorP(Period):
     # třída implementující P-regulátor
-    def __init__(self, p:float, timeout_ms:int):
+    def __init__(self, p:float, timeout_ms:int) -> None:
         self.__k = p
         super().__init__(timeout_ms)
 
@@ -20,7 +20,7 @@ class RegulatorP(Period):
     
 class RegulatorPID(RegulatorP):
 
-    def __init__(self, p:float, i:float, d:float, timeout_ms:int):
+    def __init__(self, p:float, i:float, d:float, timeout_ms:int) -> None:
         RegulatorP.__init__(self, p, timeout_ms)
         self.__i = i
         self.__d = d

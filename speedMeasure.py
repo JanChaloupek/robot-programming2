@@ -12,7 +12,7 @@ class SpeedTicks:
     # Třída počítající rychlost z uložené historie tiků
     LIMIT = 50
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__index = -1
         self.__times = [0] * self.LIMIT
         self.__ticks = [0] * self.LIMIT
@@ -34,7 +34,7 @@ class SpeedTicks:
         diff = self.__ticks[self.__index] - ticks
         return diff == 0
 
-    def nextValues(self, newIndex:int, time_us:int, ticks:int):
+    def nextValues(self, newIndex:int, time_us:int, ticks:int) -> None:
         # Ulož další data do historie
         if self.__countValues < self.LIMIT:
             self.__countValues += 1
@@ -44,13 +44,13 @@ class SpeedTicks:
         self.__ticks[newIndex] = ticks
         self.__index = newIndex
 
-    def update(self, ticks):
+    def update(self, ticks) -> None:
         time_us = ticks_us()
         newIndex = self.getNewIndex(time_us)
         if newIndex is not None:
             self.nextValues(newIndex, time_us, ticks)
 
-    def calculate(self, count:int, offset:int):
+    def calculate(self, count:int, offset:int) -> float:
         # Spočti rychlost v tikách za sekundu.
         # Použij na to count dat z historie a použij ty, které jsou offset staré
         if count < 2:
@@ -63,7 +63,7 @@ class SpeedTicks:
         speed1 = self.__calculate(count, offset + 1)
         return (speed0 + speed1) / 2
 
-    def __calculate(self, count:int, offset:int):
+    def __calculate(self, count:int, offset:int) -> float:
         # Skutečné spočtení rychlosti (bez kontrol a průměrování) v tikách za sekundu
         endIndex = (self.__index - offset) % self.LIMIT
         startIndex = (endIndex - count + 1) % self.LIMIT
@@ -74,7 +74,7 @@ class SpeedTicks:
 
 class Encoder:
     # Třída počítající tiky enkoderu
-    def __init__(self, place:int, ticksPerCircle:int, radius:float):
+    def __init__(self, place:int, ticksPerCircle:int, radius:float) -> None:
         self.ticks = 0
         self.__isForward = True
         if place == DirectionEnum.LEFT:
