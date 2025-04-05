@@ -1,39 +1,48 @@
-from HardwarePlatform import sleep, button_b
+
+from HardwarePlatform import sleep, button_a, pin2, ticks_ms, PI
+from calibrateFactors import CalibrateFactors
+from senzors import LineSituationEnum
+from lightSubsystem import BeamsEnum
+from robot import createRobotJoyCar
 from directions import DirectionEnum
-from du03_engine import Engine
-from senzors import Senzors
-from du06_SM import LineSM
 from systempicoed import System
-from SM import CPU
+from SM import CPU, Step, Task
+from MainSM import MainSM
+from position import Position
+from timer import Timer
+
 
 if __name__ == "__main__":
-    leftEngine = None
-    rightEngine = None
+
+    robot = None
     try:
         print("code:Start")
+        System.display_clear()
+        # System.display_SupplyVoltage()
+        # sleep(2000)
+        # System.display_clear()
 
-        senzors = Senzors()
-        leftEngine = Engine(DirectionEnum.LEFT)
-        rightEngine = Engine(DirectionEnum.RIGHT)
+        robot = createRobotJoyCar()
+        senzors = robot.getSenzors()
+        robot.lightsControl.main = BeamsEnum.DippedBeams
+        # robot.lightsControl.indicator.warning = True
+        robot.motionControl.newVelocity(0.1, PI/8)
+        robot.motionControl.stopRegulatePwm()
+        # robot.tempomat.distance = 0.2
 
-        stateMain = LineSM(senzors, leftEngine, rightEngine)
+        stateMain = MainSM(robot, MainSM.taskList, tick_time=2_000)
         CPU.add(stateMain)
 
-        while not button_b.was_pressed():
+        # timer = Timer(timeout_ms=2000)
+        while not button_a.was_pressed():
             CPU.tick()
-            senzors.update()
-            System.updatePixels()
+            robot.update()
             sleep(1)
             
-        leftEngine.stop()
-        rightEngine.stop()
         print("code:Stop")
+        robot.stop()
     except Exception as e:
         print('Emergency stop!')
-        if leftEngine is not None:
-            leftEngine.emergencyShutdown()
-        if rightEngine is not None:
-            rightEngine.emergencyShutdown()
-        print()
-        print('Error:')
+        if robot is not None:
+            robot.emergencyShutdown()
         raise e

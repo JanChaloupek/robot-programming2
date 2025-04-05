@@ -1,0 +1,82 @@
+@startuml senzors
+
+namespace senzors {
+
+    class LineSituationEnum {
+        - Line = 1
+        - CrossRoads = 2
+    }
+
+    class Senzors {
+        - ObstaleRight = 0x40
+        - ObstaleLeft = 0x20
+        - LT_Count = 6
+        - LT_FarRight = 0x02
+        - LT_Right = 0x10
+        - LT_MiddleRight = 0x80
+        - LT_MiddleLeft = 0x08
+        - LT_Left = 0x04
+        - LT_FarLeft = 0x01
+        - LT_Central = 0x08
+        - LT_RightCross56 = LT_Right | LT_FarRight
+        - LT_LeftCross56 = LT_Left | LT_FarLeft
+        - LT_RightCross4 = LT_Right | LT_MiddleRight
+        - LT_LeftCross4 = LT_Left | LT_MiddleLeft
+        - LT_RightCross3 = LT_Right | LT_Central
+        - LT_LeftCross3 = LT_Left | LT_Central
+        - LT_All = 0x9F
+        - __data:int
+        - __timerNotLine:Timer
+        + __init__(): None
+        + getMiddleSenzorsAddr(): int
+        + show(self, bh:int=2, bl:int=1): None
+        + senzorDataUpdate(time:int=None): None
+        + getData(mask:int): int
+        + getSenzor(senzor:int): bool
+        + getAnySenzor(senzor:int): bool   
+        + update(self): None
+        + getTypeCrossRoads(self): int        
+        + getLineDirection(self): int         
+        + getSituationLine(self): LineSituationEnum
+    }
+    note right of Senzors
+        Třída vyčítající senzory po i2c a jejich získání dotazem
+
+        LT_Count je počet senzorů čáry (kód počítá s hodnotami 3, 4, 5 nebo 6)
+
+        show()  zobrazí stav vyčtených senzorů na displeji picoedu
+
+        getTypeCrossRoads() detekujeme křižovatku zatáčející vlevo (+1) nebo vpravo (+2)
+            0 = nejsme na křižovatce
+            1 = odbočka pouze vlevo
+            2 = odbočka pouze vpravo
+            3 = odbočka na obě strany
+            zatím neumím "detekovat" křižovatku pokračující rovně
+
+        getLineDirection() detekuje jestli jsme někde na čáře
+            pro 6 senzorů čáry kód umí detekovat 9 různých pozicí a podle toho různě rychle zatáčet:
+            None = nejsme na čáře
+            0    = jsme na středu (jed rovně)
+            +- 1 = malý požadavek na zatáčení (vnitřní senzory - pokud jsou dva)
+            +- 2 = střední požadavek na zatáčení (vnitřní a střední senzory)
+            +- 3 = velký požadavek na zatáčení (střední senzory)
+            +- 6 = super velký požadavek na zatáčení (krajní senzory)
+            kladne jsou leve senzory (potřebujeme zahnout doleva)
+            zaporne jsou pravé senzory (potřebujeme zahnout doprava)
+
+        getSituationLine detekuje jestli jsme na křižovatce nebo na čáře nebo jsme "ztraceni"
+            nejprve zavolá getTypeCrossRoads() 
+                a pokud jsme na křižovatce vrací <b>LineSituationEnum::CrossRoads</b>
+            pak zavolá getLineDirection()
+                a pokud jsme na čáře tak vrátí <b>LineSituationEnum::Line</b>,
+                pokud nejsme na čáře, pustí časovač (pokud ještě není spuštěný) a měří čas mimo čáru,
+                pokud jsme mimo čáru krátký čas (menší než 3_000 ms) <b>lže</b> a tvrdí, že jsme na čáře,
+                jinak vrátí <b>None</b> (jsme ztraceni).
+
+    end note
+
+    Senzors -up-> LineSituationEnum
+    Senzors <|-- timer.Timer
+}
+
+@enduml

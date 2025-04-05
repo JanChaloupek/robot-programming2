@@ -1,0 +1,33 @@
+@startuml tempomat
+
+namespace tempomat {
+
+    class  Tempomat {
+        - distance: float
+        - __regulator: RegulatorP
+        + isActivate(): bool
+        + isAcceptableDistance(actualDistance: float): bool
+        + getSpeedFromDistance(time:int, actualDistance:float): float
+        + calculateSpeed(actualDistance: float): float            
+    }
+
+    note right of Tempomat
+        Třída Tempomat implementuje adaptivní tempomat pro robota
+
+        distance  je vzdálenost, kterou má tempomat udržovat 
+            implicitní hodnou je None, což znamená vypnutý tempomat
+        __regulator  řídí/počítá potřebnou dopřednou rychlost aby byli splněny požadavky tempomatu
+
+        isActivate() vrací jesli je tempomat aktivovany (ma nastavenou vzdálenost)
+
+        isAcceptableDistance() vraci jestli jsme v přijatelné vzdálenosti abychom nemuseli NIC dělat
+            nemá smysl regulovat vzdálenost pokud rozdíl od správné vzdálenosti je 3 cm nebo méně
+
+        calculateSpeed()  použije regulátor aby ve správný čas spočítal potřebnou rychlost
+            pokud se nemá regulovat vrací None
+    end note
+
+    Tempomat -down-> regulator.RegulatorP
+}
+
+@enduml

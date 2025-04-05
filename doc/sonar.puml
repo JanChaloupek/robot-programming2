@@ -1,0 +1,38 @@
+@startuml sonar
+
+namespace sonar {
+
+    class Sonar {
+        - MAX_DISTANCE = 1
+        - LIMIT = 5
+        - __historyDistancies:list[float]
+        - __trigger:DigitalPin
+        - __echo:DigitalPin
+        - lastDistance:float
+        + __init__(timeout_ms=100): None:
+        + measureDistance(): float|int
+        + measureAndUseNewDistance(): None
+        + __average(self): float
+        + isError(self): bool
+        + update(self): None
+    }
+    note right of Sonar
+        Třída implementující měření vzdálenosti k překážce
+        používá pin8 jako trigger (vyšle ultrazvukový signál)
+        a pin 12 jako echo (měří na něm délku pulsu odpovídající dvojité vzdálenosti od překážky)
+        Délka pulzu je limitována 5_000 us (= 5ms), což odpovídá vzdálenosti necelý 1m
+
+        lastDistance   obsahuje poslední známou vzdálenost (v metrech) od překážky nebo None pokud není známá.
+
+        measureDistance() vrací po jednom měření číslo chyby nebo vzdálenost od překážky
+        measureAndUseNewDistance() provede měření a následně provede průměrování z platných hodnot 
+            nebo připočítává chybu měření
+        update() po vypršení času periody (implicitně 100ms) provede další měření (measureAndUseNewDistance)
+        isError() vrací že měření nefunguje. Měřicí funkce dlouhodobě (víc než posledních 10 měření) vrací chybu.
+    end note
+
+    Sonar <|-- timer.Period
+    Sonar -down-> HardwarePlatform.DigitalPin
+}
+
+@enduml

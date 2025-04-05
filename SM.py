@@ -57,7 +57,7 @@ class Task:
         self.tickTime = tick_time
         self.autoNext = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 class Step(Task):

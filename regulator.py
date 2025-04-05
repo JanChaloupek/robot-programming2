@@ -3,14 +3,14 @@ from timer import Period
 class RegulatorP(Period):
     # třída implementující P-regulátor
     def __init__(self, p:float, timeout_ms:int) -> None:
-        self.__k = p
+        self.__p = p
         super().__init__(timeout_ms)
 
     def dT(self, time_ms:int) -> float:
         return self.getTimeDiff(time_ms) / 1000
 
     def k(self, time_ms: int) -> float:
-        return self.__k * self.dT(time_ms)
+        return self.__p * self.dT(time_ms)
 
     def getActionIntervention(self, time_ms:int, inputNominal:float, inputActual:float) -> float:
         # vypočti akční zásah

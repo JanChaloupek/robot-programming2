@@ -6,6 +6,8 @@ class Timer:
         self.timeout_ms = timeout_ms
         if startTimer:
             self.startTimer()
+        else:
+            self.stopTimer()
 
     def __getTime(self, time_ms:int) -> int:
         # pokud nemas cas, vrat aktualni cas v ms
@@ -22,8 +24,9 @@ class Timer:
 
     def startTimer(self, start_time_ms:int=None, timeout_ms:int=None) -> None:
         # spust časovač
-        self.timeout_ms = timeout_ms
-        self.__startTime = self.__getTime(start_time_ms)
+        if timeout_ms is not None:
+            self.timeout_ms = timeout_ms
+        self.__startTime = self.__getTime(start_time_ms)    
 
     def stopTimer(self) -> None:
         # zastav časovač
@@ -41,7 +44,8 @@ class Timer:
         return diff_ms >= self.__getTimeout(timeout_ms)
 
 class Period(Timer):
-    # třída implementující casovac, ktery se sam opakovane spousti po uplynuti timeoutu
+    # třída implementující periodický časovač
+
     def isTime(self, test_time_ms:int=None, timeout_ms:int=None) -> bool:
         time_ms = self.__getTime(test_time_ms)
         ret = self.isTimeout(time_ms, timeout_ms)

@@ -14,7 +14,7 @@ class  Tempomat:
         # je tempomat aktivovany (ma nastavenou vzdálenost)?
         return self.distance is not None
 
-    def isAcceptableDistance(self, actualDistance) -> bool:
+    def isAcceptableDistance(self, actualDistance:float) -> bool:
         # jsme v přijatelné vzdálenosti od překážky?
         distanceDif = abs(actualDistance - self.distance)
         return distanceDif <= 0.03

@@ -1,0 +1,45 @@
+@startuml timer
+
+namespace timer {
+    class Timer {
+        - timeout_ms:int
+        - __startTime:int
+
+        + __init__(timeout_ms:int=None, startTimer:bool=True): None
+        + __getTime(time_ms:int):int
+        + __getTimeout(timeout_ms:int=None):int
+        + startTimer(start_time_ms:int=None, timeout_ms:int=None): None        
+        + stopTimer(): None
+        + isStarted(): bool
+        + isTimeout(test_time_ms:int=None, timeout_ms:int=None): bool
+    }
+    note right of Timer
+        Třída implementující časovač
+    end note
+    note left of Timer::__getTime
+        Pokud nemáš čas, vrať aktuální čas v ms
+    end note
+    note left of Timer::startTimer
+        Spusť časovač
+    end note
+    note left of Timer::stopTimer
+        Zastav časovač
+    end note
+    note left of Timer::isStarted
+        Je časovač spuštěn?
+    end note
+    note left of Timer::isTimeout
+        Vypršel timeout časovače v case 'time_ms'?
+    end note
+
+    class Period {
+        + isTime(self, test_time_ms:int=None, timeout_ms:int=None): bool
+    }
+    Period <|-u- Timer
+
+    note bottom of Period
+        Třída implementující casovac, ktery se sam opakovane spousti po uplynuti timeoutu
+    end note
+}
+
+@enduml

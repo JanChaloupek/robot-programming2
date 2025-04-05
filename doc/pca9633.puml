@@ -1,0 +1,45 @@
+@startuml pca9633
+
+namespace pca9633 {
+    class PCA9633 {
+        - RegMODE1 = 0x00
+        - RegMODE2 = 0x01
+        - RegPWM0 = 0x02
+        - RegPWM1 = 0x03
+        - RegPWM2 = 0x04
+        - RegPWM3 = 0x05
+        - RegGRPPWM = 0x06
+        - RegGRPFREQ = 0x07
+        - RegLEDOUT = 0x08
+        - RegSubADR1 = 0x09
+        - RegSubADR2 = 0x0A
+        - RegSubADR3 = 0x0B
+        - RegALLCALLADR = 0x0C
+        + __init__(i2c:I2C, address=0x62):
+        + writeRegister(reg:int, value:int) -> int
+        + readRegister(reg:int) -> int
+    }
+    note right of PCA9633
+        Třída starající o zápis a čtení do čipu PCA9633 použitého pro pwm buzení motorů. 
+
+        writeRegister umí zapsat hodnotu do kontrétního registru
+        readRegister umí přečíst hodnotu z kontrétního registru
+
+        Jména registrů:
+        <b>RegMODE1</b> - Mode 1 register
+        <b>RegMODE2</b> - Mode 2 register
+        <b>RegPWM0</b> - PWM register for channel 0
+        <b>RegPWM1</b> - PWM register for channel 1
+        <b>RegPWM2</b> - PWM register for channel 2
+        <b>RegPWM3</b> - PWM register for channel 3
+        <b>RegGRPPWM</b> - Group duty cycle control
+        <b>RegGRPFREQ</b> - Group frequency
+        <b>RegLEDOUT</b> - LED output state
+        <b>RegSubADR1</b> - I2C-bus subaddress 1
+        <b>RegSubADR2</b> - I2C-bus subaddress 2
+        <b>RegSubADR3</b> - I2C-bus subaddress 3
+        <b>RegALLCALLADR</b> - AllCall I2C-bus address
+    end note
+}
+
+@enduml

@@ -1,0 +1,17 @@
+@startuml velocity
+
+namespace velocity {
+
+   class Velocity {		
+        - forward: float
+        - angular: float
+    }
+    note right of Velocity
+        Třída pamatující si rychlost robota (požadovanou nebo vypočtenou)
+
+        forward   obsahuje dopřednou rychlost
+        angular   obsahuje úhlovou rychlost robota (otáčení kolem své osy)
+    end note
+}
+
+@enduml

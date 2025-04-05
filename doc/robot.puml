@@ -1,0 +1,52 @@
+@startuml robot
+
+namespace robot {
+
+    class Robot {
+	    - velocity:Velocity
+	    -__sonar: Sonar
+	    - lightsControl:LightsControl
+	    - motionControl:MotionControl
+	    - tempomat:Tempomat
+	    + __init__(robotDiameter:float, wheelDiameter:float, ticksPerCircle:int, calibrateFactors:list[CalibrateFactors])
+	    + getSenzors() -> Senzors
+	    + stop()
+	    + emergencyShutdown()
+	    + getObstacleDistance()
+	    + __testBumber()
+	    + speedLimitation(speed: float) -> float
+	    + tempomat_updateSpeed()
+	    + rideLine(baseForward:float=0.2, baseAngular:float=0.3, back:bool=False)
+	    + getSituationLine() -> int
+	    + exitCrossRoads(direction:int, forward:float=0.1, angular:float=0.1) -> bool
+	    + turningToLine(direction:int, angularSpeed:float) -> bool
+	    + follow(point:Point, forward:bool) -> tuple[bool, bool]
+	    + update()
+    }
+    note left of Robot
+        Třída Robot je hlavní třídou zapouzdřující funkce robota
+
+        používá instanci třídy:
+            <b>Point</b> pro uložení pozice kam se máme dostat při stanovení cíle (sledování mrkve)
+            <b>Sonar</b> pro měření vzdálenosti k překážkám
+            <b>Tempomat</b> pro udržování vzdálenosti od předchozího auta (pžekážky)
+            <b>CalibrateFactors</b> pro uložení kalibračních hodnot do obou kol (umístěných v lightSubsystem)
+            <b>Senzors</b> pro získání hodnot od senzorů čáry (jízda po silnici a detekce křižovatek) a blízkosti (implemenace nárazníků)
+
+            <b>Velocity</b> pro uložení požadované ruchlosti robota (dopředné a úhlové)
+
+            <b>MotionControl</b> pro ovládání pohybu robota a zpětné vyčtení rychlosti a pozice (Odometrie)
+            <b>LightsControl</b> pro ovládání světel robota (přední, zadní, směrovky)
+    end note
+
+    Robot -right-> velocity.Velocity
+    Robot -up-> calibrateFactors.CalibrateFactors
+    Robot -up-> senzors.Senzors
+    Robot -up-> tempomat.Tempomat
+    Robot -up-> sonar.Sonar
+    Robot -up-> position.Point
+    Robot -down-> motionControl.MotionControl
+    Robot -down-> lightSubsystem.LightsControl
+}
+
+@enduml

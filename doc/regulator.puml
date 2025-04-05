@@ -1,0 +1,37 @@
+@startuml regulator
+
+namespace regulator {
+
+    class RegulatorP {
+        - __p:float
+        + __init__(p:float, timeout_ms:int) -> None
+        + dT(time_ms:int) -> float
+        + k(time_ms: int) -> float
+        + getActionIntervention(time_ms:int, inputNominal:float, inputActual:float) -> float
+    }
+    note right of RegulatorP
+        Třída RegulatorP je potomkem třídy Period
+        Umí řídit regulaci veličiny přes P-regulátor
+
+        dT(time_ms) spočte rozdíl času (v sekundách) od minulého zavolání regulátoru
+        k(time_ms) vrátí korigovaný člen přes rozdíl času ( self.__p * self.dT(time_ms) )
+        getActionIntervention vypočte akční zásah regulátoru 
+    end note
+    RegulatorP <|-- timer.Period
+    
+    class RegulatorPID {
+        - __i:float
+        - __d:float
+        + __init__(p:float, i:float, d:float, timeout_ms:int) -> None
+        + getActionIntervention(self, time_ms:int, inputNominal:float, inputActual:float) -> float
+    }
+    note right of RegulatorPID
+        Třída RegulatorPID je potomkem třídy RegulatorP
+        Má řídit regulaci veličiny přes PID-regulátor - zatím nefunguje
+
+        getActionIntervention vypočte akční zásah regulátoru 
+    end note
+    RegulatorPID <|-- RegulatorP
+}
+
+@enduml

@@ -1,0 +1,68 @@
+@startuml speedMeasure
+
+namespace speedMeasure {
+
+    class MeasureUnit {
+        - TicksPerSecond = 11
+        - RevolutionsPerSecond = 12
+        - RadianPerSecond = 13
+        - MeterPerSecond = 14
+        - RevolutionsPerMinute = 23
+    }
+
+    class SpeedTicks {
+        - LIMIT = 50
+        - __times: list[int]
+        - __ticks: list[int]
+        - isStopped: bool
+        + __init__(): None:
+        + getNewIndex(time_us:int): int
+        + isZeroChangeTicks(ticks:int): bool
+        + nextValues(newIndex:int, time_us:int, ticks:int): None
+        + update(ticks: int): None
+        + calculate(count:int, offset:int): float
+    }
+    note right of SpeedTicks
+        Třída SpeedTicks počítá rychlost z uložené historie tiků.
+        Pamatuje si historii 50 vzorků po 100ms (počet vorků je v LIMIT)
+
+        isStopped obsahuje True pokud za poslednich 100ms nepřišel ani jeden tik (stojíme nebo jedeme tak pomalu že to nedetekujeme)
+        calculate() spočte rychlost v tickách za sekundu z count vzorků starých (posunutých) o offset vzorků
+
+        update() se musí volat pravidelně a pokud už je čas ulořit další vzorek, tak ho uložíme
+        nextValues() uloží další cas a počet tiků do pozice newIndex v cyklických seznamech __times[] a __ticks[]
+        getNewIndex() vrátí nový index pro uložení nebo None pokud se ted ukládat nemá
+        isZeroChangeTicks() vrátí True pokud je počet tiků od poslední uložené hodnotu nulový
+            používá se pro nastavení property <b>isStopped</b> vždy když se ukládá nová hodnota do historie
+    end note
+
+    class Encoder {
+        # Třída počítající tiky enkoderu
+        - ticks: int
+        - __pin: PinDigital
+        - __isForward: bool
+        - __speedTicks: SpeedTicks
+        + __init__(place:DirectionEnum, ticksPerCircle:int, radius:float): None
+        + getOdometryTicks(): int
+        + isStopped(self): bool
+        + readPin(): int
+        + nextTick(): None
+        + update(isForward:bool): None
+        + getSpeed(unit:MeasureUnit, count:int=3, offset:int=0): float
+    }
+     note right of Encoder
+        Třída Encoder vyčítá z enkoderu tiky.
+        Podle property <b>__isForward</b> tiky buď přičítá nebo odečítá. Tato property je nastavována při každém volání update().
+        Obsahuje objekt třídy SpeedTick pro počítání rychlosti.
+
+        getOdometryTicks() vrací rozdíl tiků pro odometrii od posledního zavolání funkce
+        isStopped() vrací hodnotu propery isStopped z objektu __speedTicks
+        getSpeed() umí spočítat rychlost a vrátit ji v požadované jednotce rychlosti.
+            Použije na to count hodnot s historie objektu SpeedTicks posunutých o offset (starší hodnoty pokud je potřebujeme).
+    end note
+   Encoder -up-> MeasureUnit
+    Encoder -up-> HardwarePlatform.DigitalPin
+    Encoder -down-> SpeedTicks
+}
+
+@enduml

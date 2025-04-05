@@ -1,0 +1,80 @@
+@startuml lightSubsystem
+
+namespace lightSubsystem {
+    class IndicatorStateEnum {
+        - SPACE = 1
+        - LIGHT = 2
+    }
+    note bottom of IndicatorStateEnum
+       Výčtová třída pro indikátory (směrovky)
+       (pauza/svítí)
+    end note
+
+    class BeamsEnum {
+        - DippedBeams = 1
+        - HighBeams = 2
+    }
+    note top of BeamsEnum
+       Výčtová třída pro hlavní světla 
+       (potkávací/dálková)
+    end note
+
+    class IndicatorState {
+        + __init__(): None
+        + set(value:IndicatorStateEnum): None
+        + reset(): None
+        + isDifferent(other:IndicatorStateEnum): bool
+        + changeState(): None
+    }
+    note top of IndicatorState
+       Třída ukládající stav "blikání" indikátorů (směrovek)
+       Přepínání (nastavování barev) je řízeno časovačem s timeoutem 400ms
+    end note
+    
+    class Lights {
+        - __neopixels: Neopixel
+        + __init__(): None
+        + setColorToOneLed(ledNo:int, color:list[int]): None
+        + setColor(ledList:list[int], color:list[int]): None
+        + showColor(): None
+    }
+    note right of Lights
+       Třída pracující se světly. Má v sobě objekt s 8 Neopixel ledkami
+       Funkce umí nastavit barvu pro jedno světlo, 
+       nastavit barvu pro množinu světel,
+       a odeslat barvy na ledky
+
+       Odesílání barev je řízeno časovačem s timeoutem 100ms 
+    end note
+
+    class LightsControl {
+        - main: BeamsEnum
+        - indicator: DirectionEnum
+        - warning: bool
+        - __lights: Lights
+        - __indicatorState: IndicatorState
+        + __init__(velocity:Velocity): None
+        + udate(): None
+    }
+    note right of LightsControl
+        Třída starající se o všechny světla autíčka.
+
+        main - hlavní světla (výčet z potkávací, dálková. None = vypnuto)
+        indicator - směrovky (výčet z pravá, levá. None = vypnuto)
+        warning - výstražný "trojúhelník" (blikají všechny směrovky)
+        při záporné rychlosti se aktivuje zpáteční světlo
+
+        Do budoucna se počítá i s brzdovým světlem - nyní ještě nefunguje správně
+    end note
+
+    IndicatorState <|-- timer.Timer
+    Lights <|-- timer.Timer
+    IndicatorState -down-> IndicatorStateEnum
+    LightsControl -down-> Lights
+    LightsControl -down-> IndicatorState
+    LightsControl -left-> BeamsEnum
+    LightsControl -up-> velocity.Velocity
+    LightsControl -up-> direction.DirectionEnum
+}
+
+@enduml

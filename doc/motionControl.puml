@@ -1,0 +1,139 @@
+@startuml motionControl
+
+namespace motionControl {
+
+    class Wheel {
+        - __place: DirectionEnum
+        - __radius: float
+        - __angularSpeed: float
+        - __encoder: Encoder
+        - __pwmRegulator: RegulatorP
+        + __init__(place:DirectionEnum, radius:float, tickPerCircle:int, calibrateFactors:CalibrateFactors): None
+        + isStopped(): bool
+        + writePWM(pwm:int): None
+        + stop(): int
+        + getOdometryTicks(): int
+        + getMinimumForwardSpeed(): float
+        + rideSpeed(forwardSpeed:float): None
+        + ridePwm(pwm:int): int
+        + __changePwm(changeValue:float): None
+        + getSpeed(unit:MeasureUnit, count:int=5, offset:int=0): float
+        + regulatePwm(startRegulate:bool=False, stopRegulate:bool=False): None
+        + update(): None
+        + calibrate_init(): None
+        + calibrate_updateMinimumStop(speed:float, pwm:int): None
+        + calibrate_updateMinimumMotion(speed:float, pwm:int): None
+        + calibrete_getMinimumPwmStop(): int
+        + createCalibrateFactors(speed:float, pwm:int): None
+    }
+    note top of Wheel
+        Třída starající o jedno kolo. 
+
+        Nastavuje a reguluje pwm z požadované dopředné rychlosti kola.
+           (regulaci pwm jde vypnout a zapnout)
+        Pro prvotní nastavení pwm používá třídu calibrateFactors, která obsahuje výsledek kalibrace.
+        Vyčítá tiky (přes vložený object Encoder),
+        a umí vrátit rychlost kola (v různých jednotkách) což také přebírá z Encoderu.
+        Umí tiky nabízet odometrii.
+
+        Má implementovánu podporu pro kalibraci (kterou ale dělá třída Wheels).
+    end note
+
+    Wheel -up-> pca9633.PCA9633
+    Wheel -down-> speedMeasure.Encoder
+    Wheel -down-> speedMeasure.MeasureUnit
+    Wheel -down-> calibrateFactors.CalibrateFactors
+    Wheel -down-> regulalor.RegulatorP
+    Wheel -down-> direction.DirectionEnum
+
+    class Wheels {
+        - __wheelLeft: Wheel
+        - __wheelRight: Wheel
+        + __init__(halfWheelbase:float, wheelRadius:float, ticksPerCircle:int, calibrates:list[CalibrateFactors]): None
+        + initMotor(): None
+        + stop(): None
+        + emergencyShutdown(): None
+        + getMinimumSpeed(): float
+        + getSpeed(unit:MeasureUnit): list[float]
+        + update(): None
+        + rideSpeed(forward:float, angular:float): None
+        -- regulatePwm--
+        + stopRegulatePwm(): None
+        + startRegulatePwm(): None
+        -- odometry--
+        + getOdometryTicks(): list[int]
+        -- calibration--
+        + __calibration_ridePwm(pwm:list[int]): None
+        + __calibrate_updateMinimumStop(self, speeds:list[float], pwm:int): None
+        + __calibrate_updateMinimumMotin(self, speeds:list[float], pwm:int): None
+        + __createCalibrateFactors(self, speeds:list[float], pwm:list[int]): None
+        + __printCalibrateFactors(self): None
+        + __calibrate_writePwm_getMeasuredSpeed(self, pwm: int): list[float]
+        + calibration(pwmFrom:int, pwmTo:int, pwmSkip:int): None
+
+    }
+    Wheels -> Wheel
+    Wheels -up-> pca9633.PCA9633
+    Wheels -down-> speedMeasure.MeasureUnit
+    Wheels -down-> calibrateFactors.CalibrateFactors
+
+    note top of Wheels
+        Třída starající se společně o kola. 
+        Například kinematiku robota, kalibraci, ...
+
+        __wheelLeft - levé kolo
+        __wheelRight - pravé kolo
+        initMotor - inicializuje driver řízení motorů
+        stop a emergencyShutdown - bezpečnostní zastavení kol
+        getMinimumSpeed - vrací minimální rychlost, kterou robot může jet
+        getSpeed - vrací aktuální rychlost kol (levého, pravého)
+        getOdometryTicks - vrací aktuální počet tiků (od posledního spočtení) pro výpočet odometrie
+        stopRegulatePwm - zastaví regulaci PWM
+        startRegulatePwm - spustí regulaci PWM
+        update - aktualizuje všechny polohu robota (x, y, úhel) a všechny další potřebné části
+        rideSpeed - nastaví požadovanou rychlost robota (dopřednou, úhlovou) pro výpočet kinematiky
+        ridePwm - nastaví požadovanou rychlost kol (levého, pravého) pres PWM
+        getMinimumPwmStop - vrací minimální PWM pro zastavení kol
+        calibration - spouští kalibraci kol robota
+    end note
+
+   class MotionControl {
+        - velocity: Velocity
+        - odometry: Odometry
+        - __wheelRadius: float
+        - __wheels: Wheels
+        + __init__(wheelbase:float, wheelDiameter:float, ticksPerCircle:int, velocity:Velocity, calibrateFactors:list[CalibrateFactors])
+        + stop()
+        + emergencyShutdown()
+        + stopRegulatePwm()
+        + getMinimumSpeed(): float
+        + newVelocity(forward:float=0.0, angular:float=0.0)
+        + update(): None
+        --calibration--
+        + calibration(pwmFrom:int, pwmTo:int, pwmSkip:int)
+        --odometry--
+        + odometry_update()
+        + odometry_recalculate(time_ms:int=None)
+        + odometry_reinit()
+    }
+    MotionControl -> Wheels
+    MotionControl -down-> position.Odometry
+    MotionControl -down-> velocity.Velocity
+
+    note top of MotionControl
+        Třída starající se o pohyb robota.
+
+        velocity - požadovaná rychlost (dopředná, úhlová)
+        odometry - aktuální poloha robota (x, y, úhel)
+        __wheels - objekt třídy kol, která se stará o řízení kol a jejich kalibraci   
+
+        stop a emergencyShutdown - bezpečnostní zastavení kol
+        getMinimumSpeed - vrací minimální rychlost, kterou robot může jet 
+        newVelocity - nastaví požadovanou rychlost robota (dopřednou, úhlovou)
+        update - aktualizuje všechny polohu robota (x, y, úhel) a všechny další potřebné části
+        calibration - spouští kalibraci kol robota
+        odometry_reinit - inicializuje odometrii znovu na počátek (například po kalibraci)
+    end note
+}
+
+@enduml

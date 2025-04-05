@@ -6,6 +6,48 @@ from directions import DirectionEnum
 from velocity import Velocity
 from position import Odometry
 
+from HardwarePlatform import I2C
+
+class PCA9633:
+    Reg_MinAddr = 0x00  # Minimum address register 
+    Reg_MaxAddr = 0x0C  # Maximum address register
+
+    RegMODE1 = 0x00  # Mode 1 register
+    RegMODE2 = 0x01  # Mode 2 register
+    RegPWM0 = 0x02   # PWM register for channel 0
+    RegPWM1 = 0x03   # PWM register for channel 1
+    RegPWM2 = 0x04   # PWM register for channel 2
+    RegPWM3 = 0x05   # PWM register for channel 3
+    RegGRPPWM = 0x06  # Group duty cycle control
+    RegGRPFREQ = 0x07  # Group frequency
+    RegLEDOUT = 0x08  # LED output state
+    RegSubADR1 = 0x09  # I2C-bus subaddress 1
+    RegSubADR2 = 0x0A  # I2C-bus subaddress 2
+    RegSubADR3 = 0x0B  # I2C-bus subaddress 3
+    RegALLCALLADR = 0x0C  # AllCall I2C-bus address
+
+    def __init__(self, i2c:I2C, address=0x62):
+        self.__i2c = i2c
+        self.__address = address
+
+    def writeRegister(self, reg:int, value:int) -> None:
+        # Write a value to a specific register
+        self.__i2c.write(self.__address, bytes([reg, value]))
+    
+    def readRegister(self, reg:int) -> int:
+        # Read a value from a specific register
+        readbuffer = bytearray(1)
+        self.__i2c.write_readinto(self.__address, bytes([reg]), readbuffer)
+        return readbuffer[0]  # Return the read value
+
+    def clearRegister_writeRegister(self, clearReg: int, writeReg:int, value:int, ) -> None:
+        # Clear a register and then write a value to another register
+        # This is useful for registers that require a specific sequence to clear before writing
+        self.writeRegister(clearReg, 0)
+        self.writeRegister(writeReg, value)
+
+pca9633 = PCA9633(i2c)
+
 class Wheel:
     # Třída implementující motor
     def __init__(self, place:int, radius:float, tickPerCircle: int, calibrateFactors:CalibrateFactors) -> None:
@@ -16,48 +58,23 @@ class Wheel:
         self.__radius = radius
         self.__angularSpeed = 0.0
         self.__pwm = 0
-        self.__pwmNo_Back = None
-        self.__pwmNo_Forw = None
         if place == DirectionEnum.RIGHT:
-            self.__pwmNo_Back = 2
-            self.__pwmNo_Forw = 3
+            self.__pwmReg_Back = PCA9633.RegPWM0
+            self.__pwmReg_Forw = PCA9633.RegPWM1
         elif place == DirectionEnum.LEFT:
-            self.__pwmNo_Back = 4
-            self.__pwmNo_Forw = 5
+            self.__pwmReg_Back = PCA9633.RegPWM2
+            self.__pwmReg_Forw = PCA9633.RegPWM3
+        else:
+            raise ValueError("Wheel: Invalid place")
 
     def isStopped(self) -> bool:
         # je detekováno, že (asi) stojíme?
         return self.__encoder.isStopped()
 
-    def writePWM(self, pwm:int) -> None:
-        # omezeni pwm (zapisujeme 1 byte = maximalne 255 ve spravnem smeru)
-        if pwm > 255:
-            pwm = 255
-            # print('maximum pwm', pwm)
-        if pwm < -255:
-            pwm = -255
-            # print('maximum pwm', pwm)
-        self.__pwm = pwm
-        
-        if pwm >= 0:
-            pwmNo_off = self.__pwmNo_Back
-            pwmNo_on = self.__pwmNo_Forw
-        else:
-            pwmNo_off = self.__pwmNo_Forw
-            pwmNo_on = self.__pwmNo_Back
-
-        # zapiš pwm přes i2c do motoru
-        if (pwmNo_off is not None) and (pwmNo_on is not None):
-            i2c.write(I2C_ADDR_MOTION, bytes([pwmNo_off, 0]))
-            i2c.write(I2C_ADDR_MOTION, bytes([pwmNo_on, abs(pwm)]))
-
     def stop(self) -> None:
         # bezpečnostní odstavení motorů
         self.__angularSpeed = 0.0
-        self.writePWM(0)
-
-    def getOdometryTicks(self) -> int:
-        return self.__encoder.getOdometryTicks()
+        self.ridePwm(0)
 
     def getMinimumForwardSpeed(self) -> float:
         # dej mi minimální doprednou rychlost kola robota z kalibrace kol
@@ -73,7 +90,7 @@ class Wheel:
         pwm = self.__calibrateFactors.calculatePwm(self.__angularSpeed)
         self.ridePwm(pwm)
 
-    def __checkMinimumPwm(self, pwm) -> int:
+    def __checkMinimumPwm(self, pwm:int) -> int:
         minPwm = self.__calibrateFactors.getMinimumPwm(self.isStopped())
         if abs(pwm) < minPwm:
             if pwm < 0:
@@ -82,10 +99,23 @@ class Wheel:
             return minPwm
         return pwm
 
+    def __checkMaximumPwm(self, pwm:int) -> int:
+        if pwm > 255:
+            pwm = 255
+        if pwm < -255:
+            pwm = -255
+        return pwm
+
     def ridePwm(self, pwm:int) -> None:
-        if pwm != 0.0:   # pokud máme NEnulovou rychlost, tak vyřeš minimální hodnoty pwm
+        if pwm != 0.0:   # pokud máme NEnulovou rychlost, tak vyřeš minimální a maximální hodnoty pwm
             pwm = self.__checkMinimumPwm(pwm)
-        self.writePWM(pwm)
+            pwm = self.__checkMaximumPwm(pwm)
+        # sem by se uz mala dostat správná (omezena) hodnota pwm
+        self.__pwm = pwm
+        if pwm >= 0:
+            pca9633.clearRegister_writeRegister(self.__pwmReg_Back, self.__pwmReg_Forw, pwm)
+        else:
+            pca9633.clearRegister_writeRegister(self.__pwmReg_Forw, self.__pwmReg_Back, -pwm)
 
     def __changePwm(self, changeValue:float) -> None:
         # změn pwm o tuto hodnotu
@@ -108,19 +138,17 @@ class Wheel:
         time_ms = ticks_ms()
         if self.__pwmRegulator.isTime(time_ms):
             measuredAngularSpeed = self.__encoder.getSpeed(MeasureUnit.RadianPerSecond)
-            # if self.__place == DirectionEnum.LEFT:
-            #     print()
-            #     print('angularSpeed=', self.__angularSpeed, 'measuredAngularSpeed=',measuredAngularSpeed)
             changePwm = self.__pwmRegulator.getActionIntervention(
                 time_ms, self.__angularSpeed, measuredAngularSpeed
             )
-#            if self.__pwmNo_Back == 2:
-#                print(self.__angularSpeed, measuredAngularSpeed, self.__pwm, changePwm)
             self.__changePwm(changePwm)
 
     def update(self) -> None:
         self.__encoder.update(isForward = self.__pwm >= 0)
         self.regulatePwm()
+
+    def getOdometryTicks(self) -> int:
+        return self.__encoder.getOdometryTicks()
 
     def calibrate_init(self) -> None:
         self.__minSpeed = 0
@@ -139,7 +167,7 @@ class Wheel:
         if speed != 0.0:
             self.__minPwmMotion = abs(pwm)
 
-    def getMinimumPwmStop(self) -> int:
+    def calibrate_getMinimumPwmStop(self) -> int:
         return self.__minPwmStop
 
     def createCalibrateFactors(self, speed:float, pwm:int):
@@ -150,18 +178,19 @@ class Wheel:
         b = pwm - a * speed
         self.__calibrateFactors = CalibrateFactors(self.__minSpeed, self.__minPwmStop, self.__minPwmMotion, a, b)        
 
+
 class Wheels:
     # Třída implementující motory diferenciálního podvozku
     def __init__(self, halfWheelbase:float, wheelRadius:float, ticksPerCircle:int, calibrates:list[CalibrateFactors]) -> None:
         self.__wheelLeft  = Wheel(DirectionEnum.LEFT , wheelRadius, ticksPerCircle, calibrates[0])
         self.__wheelRight = Wheel(DirectionEnum.RIGHT, wheelRadius, ticksPerCircle, calibrates[1])
         self.__halfWheelbase = halfWheelbase
-        self.initMotor()
+        self.initMotorDriver()
 
-    def initMotor(self) -> None:
-        # inicializuj pwn driver pro motor
-        i2c.write(I2C_ADDR_MOTION, bytes([0xE8, 0xAA]))
-        i2c.write(I2C_ADDR_MOTION, bytes([0x00, 0x01]))
+    def initMotorDriver(self) -> None:
+        # inicializuj pwm driver pro motor
+        pca9633.writeRegister(PCA9633.RegMODE1, 0x00)   # vypni sleep a všechny SW adresy
+        pca9633.writeRegister(PCA9633.RegLEDOUT, 0xAA)  # nastav všechny 4 výstupy ovládané přes PWMx
 
     def stop(self) -> None:
         self.__wheelLeft.stop()
@@ -217,12 +246,9 @@ class Wheels:
         self.__wheelLeft.rideSpeed(forward - self.__halfWheelbase * angular)
         self.__wheelRight.rideSpeed(forward + self.__halfWheelbase * angular)
 
-    def ridePwm(self, pwm:list[int]):
+    def __calibrate_ridePwm(self, pwm:list[int]):
         self.__wheelLeft.ridePwm(pwm[0])
         self.__wheelRight.ridePwm(pwm[1])
-
-    def getMinimumPwmStop(self) -> int:
-        return max(self.__wheelLeft.getMinimumPwmStop(), self.__wheelRight.getMinimumPwmStop())
     
     def __calibrate_updateMinimumStop(self, speeds:list[float], pwm:int) -> None:
         self.__wheelLeft.calibrate_updateMinimumStop(speeds[0], pwm)
@@ -242,7 +268,7 @@ class Wheels:
 
     def __calibrate_writePwm_getMeasuredSpeed(self, pwm: int) -> list[float]:
         display.scroll(abs(pwm))
-        self.ridePwm([pwm, -pwm])
+        self.__calibrate_ridePwm([pwm, -pwm])
         # pockej az se zmeri rychlost po zmene pwm
         for wait in range(600):
             self.update()
@@ -274,7 +300,7 @@ class Wheels:
         speedsMax = speeds
         sleep(50)
         # klesame s pwm - začneme tam, kde se motory rozjeli
-        pwm = self.getMinimumPwmStop()
+        pwm = self.__calibrate_getMinimumPwmStop()
         while pwm >= 0:
             speeds = self.__calibrate_writePwm_getMeasuredSpeed(-pwm)
             self.__calibrate_updateMinimumMotin(speeds, pwm)

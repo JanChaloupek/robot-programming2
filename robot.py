@@ -1,7 +1,7 @@
 from HardwarePlatform import ticks_diff, ticks_ms, i2c, led, ROBOT_DIAMETER, WHEEL_DIAMETER, TICKS_PER_CIRCLE
 from calibrateFactors import CalibrateFactors
 from lightSubsystem import LightsControl
-from motionControl import MotionControl
+from motionSubsystem import MotionControl
 from regulator import RegulatorP
 from directions import DirectionEnum
 from tempomat import Tempomat

@@ -1,0 +1,17 @@
+@startuml calibrateFactors
+
+namespace calibrateFactors {
+    class CalibrateFactors {		
+        - minimumAngularSpeed:float
+        - minPwm_WhenStopped:float
+        - minPwm_InMotion:int
+        - a:float
+        - b:float
+	    + __init__(minimumAngularSpeed:float, minPwm_WhenStopped:int, minPwm_InMotion:int, a:float, b:float)
+        + __str__() -> str
+        + calculatePwm(angularSpeed:float) -> int
+        + getMinimumPwm(isStopped:bool) -> int
+    }
+}
+
+@enduml

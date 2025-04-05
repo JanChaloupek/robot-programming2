@@ -75,6 +75,7 @@ class PinPWM:
         self.pwm.duty_cycle = int(value)
 
     def read_analog(self, value) -> None:
+        #FIXME
         self.pwm.duty_cycle = int(value)
 
 

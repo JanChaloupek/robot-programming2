@@ -1,0 +1,68 @@
+@startuml position
+
+namespace position {
+
+    class Point {
+        - x:float
+        - y:float
+        + __str__() -> str
+        + distance(point:Point) -> float
+        + angle(point:Point) -> float
+    }
+    note right of Point
+        Třída Point obsahuje pozici na ploše (souřadnice x, y).
+
+        distance spočítá vzdálenost od jiného bodu.
+        angle spočítá úhel (směr) k jinému bodu.
+    end note
+
+    class Position {
+        - point:Point
+        - theta:float
+        + __init__(x:float=0.0, y:float=0.0, theta:float=0.0)
+        + __str__() -> str
+        + move_forward(distance:float=1.0)
+        + move_backward(distance:float=1.0)
+        + turn_left(angle:float=HALF_PI)
+        + turn_right(angle:float=HALF_PI)
+        + __copyPosition(copyFrom:Position)
+        + __normalizeTheta()
+        + __turn(angle:float)
+    }
+    note right of Position
+        Třída Position obsahuje pozici a natočení robota.
+        Umí počítat pozici ze zadaných příkazů.
+        
+        move_forward(distance) spočítá a uloží novou pozici, pokud robot 
+           pojede rovně o vzdálenost distance v aktuálním směru (natočení).
+        move_backward(distance) spočítá a uloží novou pozici, pokud robot
+           zacouvá rovně o vzdálenost distance v aktuálním směru (natočení).
+        turn_left(angle) spočítá a uloží nové natočení robota 
+           po zatočení vlevo o zadaný úhel.
+        turn_right(angle) spočítá a uloží nové natočení robota 
+           po zatočení vpravo o zadaný úhel.
+    end note
+    Position -up-> Point
+
+    class Odometry {
+        - initPosition:Position
+        + odometry_init(wheelbase:float, wheelRadius:float, ticksPerCircle:int, init:Position=None)
+        + odometry_reinit()
+        + odometry_calculate(deltaTicks:tuple[int,int])
+        + calculate_directionToPoint(goal:Point) -> tuple[float, float]
+        + isTimeout(self, time:int=None) -> bool
+        + odometry_startTimer(time:int=None)
+    }
+    note right of Odometry
+        Třída Odometry je potomek Position a umí navíc řešit odometrii ze získaných tiků levého a pravého kola.
+
+        odometry_init nastaví parametry potřebné pro výpočet odometrie, nastaví počátační pozici a natočení robota.
+            Pokud init je None, nastaví se počáteční souřadnice a natočení robota na hodnotu 0.
+        odometry_reinit znovu nastaví počítační pozici na tu kterou jsme získali v odometry_init.
+            Používá se například po calibraci, kdy se robot nechtěně pohybuje
+        calculate_directionToPoint(goal), spočte vzdálenost a změnu směru k zadanému cíli (použito pro "sledování mrkve")
+    end note
+    Odometry <|-up- Position
+}
+
+@enduml

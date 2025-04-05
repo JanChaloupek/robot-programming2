@@ -1,0 +1,89 @@
+@startuml HardwarePlatform
+
+namespace HardwarePlatform {
+    class I2C {
+        - picoed_i2c:piced.I2C
+        + __init__() -> None
+        + init(freq:int=100_000, sda=P20, scl=P19) -> None
+        + __lock() -> None
+        + __unlock() -> None
+        + scan() -> list[int]
+        + read(addr:int, n:int, repeat:bool=False) -> bytearray
+        + write(addr:int, buf:bytearray, repeat:bool=False) -> None
+        + write_readinto(addr:int, write_buf:bytearray, read_buf:bytearray) -> None
+    }
+    note top of I2C
+        Adapter I2C přebalující třídu z picoed-u.
+        Objekt i2c je v picoedu už vytvořený, nemusí se inicializovat.
+        Metoda init(freq, sda, scl) je tedy prázdná = nic nedělá
+    end note
+
+    class PinPWM {
+        - pinName
+        - pwm:PWMOut
+        + __init__(self, pinName) -> None
+        + set_analog_period(periodMS:int) -> None
+        + write_analog(value) -> None
+        + read_analog(value) -> int
+    }
+    note top of PinPWM
+        Adapter pro piny s ADC převodem.
+    end note
+
+    class PinDigital {
+        - pinName
+        - pin:DigitalInOut
+        + __init__(pinName) -> None
+        + read_digital() -> int
+        + write_digital(value) -> None
+    }
+    note top of PinDigital
+        Adapter pinu, s kterým se bude pracovat digitálně.
+        Přebaluje DigitalInOut z CircuitPythonu
+    end note
+
+    class PinADC {
+        - pinName
+        - pin:AnalogIn
+        + __init__(pinName) -> None
+        + read_analog() -> int
+    }
+    note top of PinADC
+        Adapter pro piny s ADC převodem.
+    end note
+
+    class globals {
+        - pin0 = P0
+        - pin1 = PinPWM(P1)
+        - pin2 = PinADC(P2)
+        - pin8 = PinDigital(P8)
+        - pin12 = PinDigital(P12)
+        - pin13 = PinPWM(P13)
+        - pin14 = PinDigital(P14)
+        - pin15 = PinDigital(P15)
+        - PI = pi	
+        - TWO_PI = 2*pi
+        - HALF_PI = pi/2
+        - I2C_ADDR_MOTION = 0x70
+        - I2C_ADDR_SENZORS = 0x38
+        - TICKS_PER_CIRCLE = 40
+        - WHEEL_DIAMETER = 0.067
+        - ROBOT_DIAMETER = 0.15
+        - i2c:I2C
+        - display
+        - led
+        + sleep(ms): None
+        + ticks_ms(): int
+        + ticks_us(): int
+        + ticks_diff(ticks1:int, ticks2:int): int
+        + time_pulse_us(pin, pulse_level: int, timeout_us=1_000_000): int
+
+    }
+    note top of globals
+        Globální objekty a funkce
+    end note    
+
+}
+
+
+@enduml

@@ -1,0 +1,137 @@
+@startuml SM
+
+namespace SM {
+
+    class Task {
+        - id: inte
+        - name: str
+        - tickTime: int
+        - autoNext: bool
+        + __init__(name:str, tick_time:int=None): None
+        + __str__(): str
+    }
+    note left of Task
+        Třída Task reprezentuje jeden stav stavového automatu.
+
+        Task se bude volat <b>opakovaně</b> podle nastavené property <b>tickTime</b> nebo podle defaultní hodnoty v stavovém automatu <b>tickTimeDefault</b>.
+        Podle názvu Tasku se budou volat metody ve stavovém automatu:
+            Task:                              Step:
+            <b>_</b><b>_{name1}_</b><b>_init</b>             <b>_</b><b>_{name1}_</b><b>_init</b>
+                     0 [ms]                             0 [ms]
+            <b>_</b><b>_{name1}</b>                            
+                     tickTime [ms]
+            <b>_</b><b>_{name1}</b>                           
+                     tickTime [ms]
+            .... 
+            <b>_</b><b>_{name1}</b>                      <b>_</b><b>_{name1}</b>
+                     tickTime or 0 [ms]            tickTime or 0 [ms]
+            <b>_</b><b>_{name1}_</b><b>_done</b>          <b>_</b><b>_{name1}_</b><b>_done</b>
+                     0 [ms]                             0 [ms]
+            <b>_</b><b>_{name2}_</b><b>_init</b>             <b>_</b><b>_{name2}_</b><b>_init</b>
+    end note
+    
+    class Step {
+        +  __init__(name:str, tick_time:int=None): None
+    }
+    note right of Step
+        Potomek třídy Task.
+
+        Odlišuje se od Tasku tím, že se hlavní funkce stavu zavolá jen jednou.
+    end note
+    Step <|-left- Task
+
+    class AbstractSM {
+        - __state_failure: Step
+        - __state_start: Task
+        - __state_end: Step
+        - __tickTimeDefault: int
+        - __period: Period
+        + __init__(tasks: list[Task]=None, tick_time_default:int=None): None
+        +  __start(): None
+        + __end(): None:
+        + __cleanSelf(): None
+        + add2CPU(sm: AbstractSM): AbstractSM
+        + cpu_child_done(cpu_no:int): None
+        + run(): None
+        + nextTask(task:Task=None, skipTimeout:bool=None): None
+        + endTask(): None
+        + failureTask(): None
+        + tick(): None
+        + setTasks(tasks: list[Task], tick_time_default:int): None
+        + __callStep( suffix: str = '') -> None:
+        + __setPeriodTimeout(n:int): None
+        + setTickTime(tickTime:int): None
+    }
+    note left of AbstractSM
+        Třída AbstractSM je předek pro stavový automat
+
+        obsahuje 3 základní stavy:
+            <b>_</b><b>_state_start</b> - tím automat začáná pokud není předaným seznamem stavů určeno jinak
+            <b>_</b><b>_state_failure</b> - stav pokud automat dokončí svou práci s chybou
+            <b>_</b><b>_state_end</b> - stav pokud automat dokončí práci úspěšně
+
+        <b>_</b><b>_tickTimeDefault</b> - defaultní čas, kterým se mají provolávat stavy
+        <b>_</b><b>_period</b> - je časovač, který zařídí automatické spouštění v předem určeném čase
+            buď je čas určen v Tasku, nebo je použit __tickTimeDefault nebo  je výsledná čas 0 (provolává se ihned když je to možné)
+
+        <b>_</b><b>_init_</b><b>_()</b> je kontruktor stavového automatu.
+            Může specifikovat seznam stavů (Step nebo Task), které má automat sekvenčně projít,
+            a také může definovat defaultní tick_time (délku mezi provoláním jednotlivých stavů)
+        
+        <b>_</b><b>_start()</b>  výchozí (nepřetížená) funkce, pro stav start - jen zavolá následující stav
+        <b>_</b><b>_end()</b>    výchozí (nepřetížená) funkce, pro stav end (úspěšný konec) - zavolá __cleanSelf(), 
+            což je vyřazení současného stavového automatu ze seznamu
+
+        <b>add2CPU()</b> přidá stavový automat jako dětský k aktuálnímu
+
+        <b>cpu_child_done()</b> - je to funkce která se zavolá při jakémkolv ukončení stavového automatu.
+            Rodičovský automat tuto funkci může přetířit aby zařídil že se má něco stát při ukončení některého jeho potomka.
+            Musí ale zkontrolovat (podle cpu_no), jestli právě skončený automat je jeho potomek
+
+        <b>run()</b> spustí stavový automat. Nově vytvořený automat není puštěný, dokud se nevloží do seznamu.
+            Fukce CPU.add() vloží automat do seznamu a spustí ho. To stejné udělá i metoda add2CPU().
+        
+        <b>nextTask()</b> vypočte, který další stav pro náš stavový automat je ten správný.
+            Buď je další stav rovnou předán jako parametr funkce, 
+            nebo se vezme další stav ze seznamu stavů, nebo se zavolá end() a automat přejde do koncového stavu.
+
+        <b>endTask()</b> automat přejde do koncového stavu
+
+        <b>failureTask()</b> automat přejde do koncového stavu při selhání
+
+        <b>tick()</b> provolává se z CPU.tick()
+
+        <b>setTask()</b> definuje nový seznam stavů a jejich defaultní čas na provolávání
+
+        <b>setTickTIme()</b> funkce nastaví čas na provolávání pro aktuální stav (zapíše se do Tasku nebo Stepu)
+    end note
+
+    AbstractSM -down-> Task
+    AbstractSM -down-> Step
+
+    class CPU {
+        - __NO = 0
+        - __Q = {}
+
+        + add(sm:AbstractSM, cpu_no_parent:int=None): AbstractSM
+        + parentOf(cpu_no:int): AbstractSM
+        + remove(cpu_no:int): None
+        + tick(): None:
+        + existSM(): bool
+    }
+    note left of CPU
+        Třída CPU obsahuje statické funkce pro přidávání, odstraňování a identifikaci stavových automatů do seznmau v procesoru (CPU).
+
+        <b>add()</b> přidá stavový automat do seznamu.
+            Pokud je definován cpu_no_parent bude stavový automat přidán jako potomek k rodiči s cpu_no_parent
+        <b>parentOf()</b> vrátí rodičovský stavový automat k automatu s cpu_no
+        <b>remove()</b> odstraní stavový automat ze seznamu
+        <b>existSM()</b> vrací True pokud existuje v seznamu alespoň jeden stavový automat.
+            Vrátí False pokud už všechny stavové automaty skončili.
+
+        <b>tick()</b> funkce která se musí pravidelně volat.
+            Zařídí provolání funkcí ze stavového automatu v požadovaných časových intervalech.
+    end note
+    CPU -down-> AbstractSM
+
+@enduml
