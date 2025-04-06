@@ -25,8 +25,8 @@ class CPU:
         CPU.__NO += 1
         sm.cpu_no = CPU.__NO
         CPU.__Q[CPU.__NO] = [sm, cpu_no_parent]
-        sm.run()
-        return sm
+        sm.run()  # Potenciálně mění sm.cpu_no
+        return sm        
 
     @staticmethod
     def parentOf(cpu_no: int) -> 'AbstractSM':
@@ -49,7 +49,7 @@ class CPU:
     @staticmethod
     def existSM() -> bool:
         return len(CPU.__Q) > 0
-
+    
 class Task:
     def __init__(self, name:str, tick_time:int=None) -> None:
         self.id = None
@@ -67,14 +67,15 @@ class Step(Task):
 
 class AbstractSM:
     # stavy definovane v kazdem stavovem automatu
-    __state_failure = Step('failure')
     __state_start = Task('start')
     __state_end = Step('end')
-
+    __state_failure = Step('failure')
+    
     INIT_SUFFIX = '__init' # provolani teto metody pred tim nez se dostaneme do stavu (vyresisit "předpoklady")
     DONE_SUFFIX = '__done' # provoleni teto metody po tom co opustime stav (uklizeni po sobe) - pred dalsim stavem
 
     def __init__(self, tasks: list[Task]=None, tick_time_default:int=None) -> None:
+        self.success = None
         self.__period = Period()
         self.__stack = []
         self.__curTask = None  # type: Task|None
@@ -92,19 +93,30 @@ class AbstractSM:
         self.nextTask()
 
     def __end(self) -> None:
-        self.__cleanSelf()
+        self.__cleanSelf(True)
 
-    def __cleanSelf(self) -> None:
+    def __failure(self) -> None:
+        self.__cleanSelf(False)
+
+    def __printResult(self, success: bool) -> None:
+        if success:
+            print(f"({self.cpu_no}, {type(self).__name__})", 'success')
+        else:
+            print(f"({self.cpu_no}, {type(self).__name__})", 'failure')
+
+    def __cleanSelf(self, success:bool) -> None:
+        # self.__printResult(success)
+        self.success = success
         parent = CPU.parentOf(self.cpu_no)
         if parent:
             parent.cpu_child_done(self.cpu_no)
         CPU.remove(self.cpu_no)
 
-    def add2CPU(self, sm: 'AbstractSM') -> 'AbstractSM':
+    def add2CPU(self, sm:'AbstractSM') -> 'AbstractSM':
         # prida noveho potomka do SQM
         return CPU.add(sm, self.cpu_no)
 
-    def cpu_child_done(self, cpu_no: int) -> None:
+    def cpu_child_done(self, cpu_no:int) -> None:
         # bude provolana, kdykoliv se dokonci ukoly v SQM potomkovi
         pass
 
@@ -126,8 +138,10 @@ class AbstractSM:
         if self.__stack:
             self.__nextTask = self.__stack.pop(0)
             return
-        # pokud uz zadnu Task nemame, spustime koncovy Task
-        self.endTask()
+        # pokud uz zadnu Task nemame
+        if self.success is None:
+            # a jeste jsme neskoncili, tak spustime koncovy Task
+            self.endTask()
 
     def endTask(self) -> None:
         self.__nextTask = self.__state_end
@@ -175,12 +189,12 @@ class AbstractSM:
         n = '__' + self.__curTask.name + suffix
         if hasattr(self, n):
             if self.debug:
-                print(ticks_ms(), n)
+                print(f"({self.cpu_no}, {type(self).__name__})", ticks_ms(), n)
             fce = getattr(self, n)
             fce()
         else:
             if self.debug:
-                print(ticks_ms(), n, '    --SKIP')
+                print(f"({self.cpu_no}, {type(self).__name__})", ticks_ms(), n, '    --SKIP')
 
     def __setPeriodTimeout(self, n:int) -> None:
         if n is None:

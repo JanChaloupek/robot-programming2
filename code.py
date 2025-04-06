@@ -30,9 +30,9 @@ if __name__ == "__main__":
         robot.motionControl.stopRegulatePwm()
         # robot.tempomat.distance = 0.2
 
-        stateMain = MainSM(robot, MainSM.taskList, tick_time=2_000)
+        #stateMain = MainSM(robot, MainSM.taskList, tick_time=2_000)
+        stateMain = MainSM(robot, tick_time=2_000)
         CPU.add(stateMain)
-
         # timer = Timer(timeout_ms=2000)
         while not button_a.was_pressed():
             CPU.tick()

@@ -2,6 +2,7 @@ from HardwarePlatform import ticks_ms, sleep, PI
 from directions import DirectionEnum
 from SM import AbstractSM, Task, Step
 from robot import Robot
+from M_SM import M_SM
 
 class MainSM(AbstractSM):
 
@@ -20,7 +21,17 @@ class MainSM(AbstractSM):
     def __init__(self, robot: Robot, tasks=None, tick_time=None) -> None:
         self.__robot = robot
         super().__init__(tasks, tick_time)
-        self.debug = True
+        # self.debug = True
+
+    def __start__init(self):
+        self.sm = M_SM(self.__robot, tick_time=1_000)
+        self.add2CPU(self.sm)
+        self.setTickTime(100)
+
+    def __start(self):
+        if self.sm.success is not None:
+            print('success=',self.sm.success, self.cpu_no)
+            self.nextTask(self.STEPdopredu)
 
     def __stop(self):
         self.__robot.motionControl.stop()
