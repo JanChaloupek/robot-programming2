@@ -1,13 +1,12 @@
-from HardwarePlatform import i2c, I2C_ADDR_SENZORS, ticks_diff, ticks_ms
+from HardwarePlatform import i2c, I2C_ADDR_SENZORS, Display
 from directions import DirectionEnum
-from systempicoed import System
-from timer import Timer
+from timer import Timer, Period
 
 class LineSituationEnum:
     Line = 1
     CrossRoads = 2
 
-class Senzors(Timer):
+class Senzors(Period):
     # třída vyčítající senzory po i2c a jejich získání dotazem
     ObstaleRight = 0x40
     ObstaleLeft = 0x20
@@ -66,7 +65,7 @@ class Senzors(Timer):
         right = self.getSenzor(Senzors.LT_Right)
         obstacleRight = self.getSenzor(Senzors.ObstaleRight)
 
-        System.display_senzors(
+        Display.senzors(
             obstacleLeft, 
             farLeft, left, 
             midleLeft, midle35, midleRight, 
@@ -75,11 +74,10 @@ class Senzors(Timer):
             bh, bl
         )
 
-    def senzorDataUpdate(self, time:int=None) -> None:
+    def senzorDataUpdate(self) -> None:
         # přečti data po i2c
         self.__dataPrev = self.__data
         self.__data = i2c.read(I2C_ADDR_SENZORS, 1)[0] ^ Senzors.LT_All
-        self.startTimer(time)
         if self.__data != self.__dataPrev:
             self.show(255,1)
 
@@ -93,12 +91,10 @@ class Senzors(Timer):
     def getAnySenzor(self, senzor:int) -> bool:
         # je alespoň jeden ze senzorů aktivní?
         return self.getData(senzor) != senzor
-    
 
     def update(self) -> None:
-        time = ticks_ms()
-        if self.isTimeout(time):
-            self.senzorDataUpdate(time)
+        if self.isTime():
+            self.senzorDataUpdate()
 
     def getTypeCrossRoads(self) -> int:
         # detekujeme křižovatku zatáčející vlevo (+1) nebo vpravo (+2)? 0 = nejsme na křižovatce

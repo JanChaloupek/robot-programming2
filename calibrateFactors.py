@@ -8,7 +8,7 @@ class CalibrateFactors:
         self.__a = a
         self.__b = b
         # přičti zatěžový koeficient (pokud bude potřeba)
-        self.__b += 40
+        # self.__b += 50
 
     def calculatePwm(self, angularSpeed:float) -> int:
         # vypočti pwm pro danou uhlovou rychlost kola

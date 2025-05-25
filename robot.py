@@ -2,6 +2,7 @@ from HardwarePlatform import ticks_diff, ticks_ms, i2c, led, ROBOT_DIAMETER, WHE
 from calibrateFactors import CalibrateFactors
 from lightSubsystem import LightsControl
 from motionSubsystem import MotionControl
+from soundSubsystem import HornController, HonkData
 from regulator import RegulatorP
 from directions import DirectionEnum
 from tempomat import Tempomat
@@ -9,7 +10,7 @@ from velocity import Velocity
 from senzors import Senzors
 from position import Point
 from sonar import Sonar
-from timer import Timer
+from timer import Timer, Period
 
 class Robot:
     # Základní třída s robotem
@@ -24,6 +25,10 @@ class Robot:
         # ovladani pohybu
         self.motionControl = MotionControl(robotDiameter, wheelDiameter, ticksPerCircle, velocity, calibrateFactors)
         self.motionControl.newVelocity(0, 0)
+        # ovládání zvuku
+        self.hornControl = HornController()
+        # casovac pro sledování cary
+        self.__linePeriod = Period()
         # objekt tempomatu (funguje az po nastaveni vzdalenosti kteou ma udrzovat)
         self.tempomat = Tempomat()
         # cas za který prejedeme krizovatku (abychom cca byli stredem otaceni nad krizovatkou)
@@ -39,7 +44,7 @@ class Robot:
         self.__minSpeed = self.motionControl.getMinimumSpeed()
         self.__timeTurn = 0
         # casovac pro signalizaci zivota (blikani led)
-        self.__ledTimer = Timer()
+        self.__ledPeriod = Period()
 
     def getSenzors(self) -> Senzors:
         return self.__senzors
@@ -80,10 +85,10 @@ class Robot:
             speed = self.speedLimitation(speed)
             self.motionControl.newVelocity(speed, 0)
 
-    def rideLine(self, baseForward=0.2, baseAngular=0.3, back:bool=False) -> None:
-        # reguluj zatáčení podle sledovače čáry
+    def rideLine(self, baseForward=0.2, baseAngular=0.3, timeout_ms=100, back:bool=False) -> None:
+        # reguluj zatáčení podle senzorů čáry
         time = ticks_ms()
-        if self.__regulatorTurn.isTimeout(time):
+        if self.__linePeriod.isTime(time, timeout_ms):
 
             if self.tempomat.isActivate():                                            # je aktivovany tempomat?
                 distance = self.getObstacleDistance()
@@ -134,17 +139,26 @@ class Robot:
         # vrat situaci sledovani cary
         return self.__senzors.getSituationLine()
 
+    def __heartbeatLED(self) -> None:
+        # blikani LED diody
+        if self.__ledPeriod.isTime(timeout_ms=150):
+            # pokud je cas, tak prepiname LED
+            led.toggle()
+
+    def playHonk(self, honkData:HonkData) -> None:
+        # spust novou sekvenci troubení
+        self.hornControl.play_honk(honkData)
+        # pass
+        
     def update(self) -> None:
         # aktualizuj subsystemy
         self.motionControl.update()
         self.lightsControl.update()
+        self.hornControl.update()
         self.__senzors.update()
         self.__sonar.update()
         self.__testBumber()
-        # signalizuj ze program zije
-        if self.__ledTimer.isTimeout(timeout_ms=150):
-            self.__ledTimer.startTimer()
-            led.toggle()
+        self.__heartbeatLED()
 
     def exitCrossRoads_start(self) -> None:
         self.__exitCrossRoadsTimer.startTimer()
@@ -200,11 +214,10 @@ class Robot:
     def follow(self, point:Point, forward:bool) -> tuple[bool, bool]:
         time = ticks_ms()
         if forward:
-            run = self.__regulatorFollow.isTime(time)
+            run = self.__regulatorFollow.isTimeout(time)
         else:
-            run = self.__regulatorTurn.isTime(time)
+            run = self.__regulatorTurn.isTimeout(time)
         if run:
-#            print("robot.follow - isTimeout")
             self.motionControl.odometry_recalculate(time)
             distance, deltaTheta = self.motionControl.odometry.calculate_directionToPoint(point)
             angular = self.__regulatorTurn.getActionIntervention(time, 0, -deltaTheta)

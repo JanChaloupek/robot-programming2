@@ -11,25 +11,30 @@ namespace timer {
         + startTimer(start_time_ms:int=None, timeout_ms:int=None): None        
         + stopTimer(): None
         + isStarted(): bool
+        + getTimeDiff(test_time_ms:int=None): int
         + isTimeout(test_time_ms:int=None, timeout_ms:int=None): bool
     }
     note right of Timer
         Třída implementující časovač
-    end note
-    note left of Timer::__getTime
-        Pokud nemáš čas, vrať aktuální čas v ms
-    end note
-    note left of Timer::startTimer
-        Spusť časovač
-    end note
-    note left of Timer::stopTimer
-        Zastav časovač
-    end note
-    note left of Timer::isStarted
-        Je časovač spuštěn?
-    end note
-    note left of Timer::isTimeout
-        Vypršel timeout časovače v case 'time_ms'?
+        <b>timeout_ms</b>     je timeout v ms
+        <b>__startTime</b>    je čas spuštění časovače v ms, zastavený časovač má hodnotu None
+
+        <b>_</b><b>_init_</b><b>_()</b>     inicializuje časovač
+                <b>timeout_ms</b> definuje čas vypršení časovaně od jeho startu (může být nastavený později)
+                pokud je <b>startTimer</b>=True, tak se časovač ihned spustí, jinak zůstane zastavený
+                
+        <b>__getTime()</b>    pokud nemáš čas definovaný parametrem, vrať aktuální čas v ms
+        <b>__getTimeout()</b> pokud nemáš timeout definovaný parametrem, vrať timeout z objektu 
+                nastavený v konstruktoru nebo při posledním startu časovače
+
+        <b>startTimer()</b>   spusť časovač 
+                můžeš definovat čas startu 'start_time_ms' a timeout 'timeout_ms'
+        <b>stopTimer()</b>    zastav časovač
+        <b>isStarted()</b>    je časovač spuštěn?
+        <b>getTimeDiff()</b>  vrátí rozdíl času od spuštění časovače 
+                můžeš definovat čas 'test_time_ms'
+        <b>isTimeout()</b>    vrátí True pokud vypršel timeout, jinak vrátí False
+                můžeš definovat čas 'test_time_ms' a timeout 'timeout_ms'
     end note
 
     class Period {
@@ -37,8 +42,11 @@ namespace timer {
     }
     Period <|-u- Timer
 
-    note bottom of Period
-        Třída implementující casovac, ktery se sam opakovane spousti po uplynuti timeoutu
+    note right of Period
+        Třída implementující časovač, který se sám znovu spoustí
+        
+        <b>isTime()</b>  funkce spustí isTimeout() a pokud je True, tak spustí časovač znovu.
+            vrátí True pokud vypršel timeout, jinak False
     end note
 }
 

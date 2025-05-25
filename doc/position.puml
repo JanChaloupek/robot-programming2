@@ -17,17 +17,16 @@ namespace position {
     end note
 
     class Position {
-        - point:Point
         - theta:float
         + __init__(x:float=0.0, y:float=0.0, theta:float=0.0)
         + __str__() -> str
+        + __normalizeTheta()
+        + __move(distance:float)
+        + __turn(angle:float)
         + move_forward(distance:float=1.0)
         + move_backward(distance:float=1.0)
         + turn_left(angle:float=HALF_PI)
         + turn_right(angle:float=HALF_PI)
-        + __copyPosition(copyFrom:Position)
-        + __normalizeTheta()
-        + __turn(angle:float)
     }
     note right of Position
         Třída Position obsahuje pozici a natočení robota.
@@ -42,7 +41,7 @@ namespace position {
         turn_right(angle) spočítá a uloží nové natočení robota 
            po zatočení vpravo o zadaný úhel.
     end note
-    Position -up-> Point
+    Position <|-up- Point
 
     class Odometry {
         - initPosition:Position

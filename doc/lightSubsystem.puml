@@ -1,80 +1,101 @@
 @startuml lightSubsystem
 
 namespace lightSubsystem {
-    class IndicatorStateEnum {
-        - SPACE = 1
-        - LIGHT = 2
-    }
-    note bottom of IndicatorStateEnum
-       Výčtová třída pro indikátory (směrovky)
-       (pauza/svítí)
-    end note
 
     class BeamsEnum {
         - DippedBeams = 1
         - HighBeams = 2
     }
-    note top of BeamsEnum
+    note right of BeamsEnum
        Výčtová třída pro hlavní světla 
        (potkávací/dálková)
     end note
 
-    class IndicatorState {
+    class Indicator {
+        - direction: DirectionEnum|None
+        - warning: bool
+        ---
+        - __indicatorPeriod: Period
+        - indicatorLight: bool|None
         + __init__(): None
-        + set(value:IndicatorStateEnum): None
-        + reset(): None
-        + isDifferent(other:IndicatorStateEnum): bool
-        + changeState(): None
+        + update(): None                   
+        + isLeft(): bool
+        + isRight(): bool
     }
-    note top of IndicatorState
-       Třída ukládající stav "blikání" indikátorů (směrovek)
-       Přepínání (nastavování barev) je řízeno časovačem s timeoutem 400ms
+    note left of Indicator
+        Třída ukládající stav "blikání" indikátorů (směrovek)
+
+        <b>direction</b> - směr indikátoru (směrovek) nebo None
+            ze stavoveho automatu (nebo hlavniho programu) se nastavuje takto:
+            robot.lightsControl.indicator.direction = DirectionEnum::RIGHT
+        <b>warning</b> - True pokud je aktivovany výstražný trojúhelník
+            ze stavoveho automatu (nebo hlavniho programu) se nastavuje takto:
+            robot.lightsControl.indicator.warning = True
+
+        <b>__indicatorPeriod</b> - časovač, řídící změnu indicatorLight s timeoutem 400ms
+        <b>indicatorLight</b> - stav blinkrů
+            None - nemají blikat
+            True - blikají     a právě teď svítí
+            False - blikají    a právě teď jsou zhasnuté
+
+        <b>update</b> - aktualizuj stav blinkru až bude čas
+        
+        <b>isLeft</b> - má blikat levý blinkr (tedy direction je LEFT nebo warning je True)
+        <b>isRight</b> - má blikat pravý blinkr (tedy direction je RIGHT nebo warning je True)
     end note
     
-    class Lights {
-        - __neopixels: Neopixel
-        + __init__(): None
-        + setColorToOneLed(ledNo:int, color:list[int]): None
-        + setColor(ledList:list[int], color:list[int]): None
-        + showColor(): None
-    }
-    note right of Lights
-       Třída pracující se světly. Má v sobě objekt s 8 Neopixel ledkami
-       Funkce umí nastavit barvu pro jedno světlo, 
-       nastavit barvu pro množinu světel,
-       a odeslat barvy na ledky
-
-       Odesílání barev je řízeno časovačem s timeoutem 100ms 
-    end note
-
     class LightsControl {
         - main: BeamsEnum
-        - indicator: DirectionEnum
-        - warning: bool
-        - __lights: Lights
-        - __indicatorState: IndicatorState
+        - indicator: Indicator
+        ---
+        - __showPeriod: Period
+        - __neopixels: NeoPixel
+        - __velocity: velocity
+        - __oldForward: float
+        - __brakeTimer: Timer
         + __init__(velocity:Velocity): None
-        + udate(): None
+        + __setBrakeFromVelocity(): None
+        + __isBrake(): bool  
+        + __isReverse(): bool
+        + __setColorIndicator(): None  
+        + __setColorOtherLights(): None   
+        + update(): None
+        + __showColor(): None
+        + __setColorToOneLed(ledNo:int, color:list[int]): None 
+        + __setColor(ledList:list[int], color:list[int]): None
     }
-    note right of LightsControl
+    note left of LightsControl
         Třída starající se o všechny světla autíčka.
 
-        main - hlavní světla (výčet z potkávací, dálková. None = vypnuto)
-        indicator - směrovky (výčet z pravá, levá. None = vypnuto)
-        warning - výstražný "trojúhelník" (blikají všechny směrovky)
-        při záporné rychlosti se aktivuje zpáteční světlo
+        <b>main</b> - hlavní světla (výčet z potkávací, dálková. None = vypnuto)
+            musí se aktivovat ručně. Při inicializaci robota nebo v budoucnu podle okolního osvětlení.
+        <b>indicator</b> - objekt směrovek (uvnitř se nastavují property direction a warning)
+           směrovky už nejsou aktivované z velocity automaticky, musí se aktivovat ručně ze stavového automatu
 
-        Do budoucna se počítá i s brzdovým světlem - nyní ještě nefunguje správně
+        při záporné rychlosti se automaticky aktivuje zpáteční světlo (dokud velocity ukazuje zápornou rychlost)
+        při zastavení (brždění) se automaticky aktivuje brzdové světlo (na 600ms) podle nastavení timeout v __brakeTimer
+
+        <b>update</b> - aktualizuj stavy všeho v světelném susbsytému. A pokud je potřeba, změn barvy na všech ledkách
+            nastavení barev a odeslání na ledky je aktivováno časovačem __showPeriod (každých 100ms)
+        
+        <b>_</b><b>_setBrakeFromVelocity</b> - spustí časovač __brakeTimer, pokud se zabrzdilo = dříve se jelo a teď právě ne
+        <b>_</b><b>_isBrake</b> - má svítit brzdové světlo? (to jest je spuštěný __brakeTimer a jestě nevypršel jeho čas)
+        <b>_</b><b>_setColorIndicator</b> - nastav barvu blinkrových světel podle nastavení v objektu Indicator
+        <b>_</b><b>_setColorOtherLights</b> - nastav barvy předních a zadních světel (ne blinkrů) včetně brzdového a couvacího světla
+
+        <b>_</b><b>_showColor</b> - nastav barvy všech světel a odešli je na ledky
+
+        <b>_</b><b>_setColorToOneLed</b> - umí nastavit jednu barvu na jedno světlo
+        <b>_</b><b>_setColor</b> - umí nastavit jednu barvu na více světel najednou
     end note
 
-    IndicatorState <|-- timer.Timer
-    Lights <|-- timer.Timer
-    IndicatorState -down-> IndicatorStateEnum
-    LightsControl -down-> Lights
-    LightsControl -down-> IndicatorState
-    LightsControl -left-> BeamsEnum
+    Indicator -down-> timer.Period
+    Indicator -right-> direction.DirectionEnum
+    LightsControl -up-> Indicator
+    LightsControl -right-> BeamsEnum
     LightsControl -up-> velocity.Velocity
-    LightsControl -up-> direction.DirectionEnum
+    LightsControl -up-> timer.Period
+    LightsControl -up-> timer.Timer
 }
 
 @enduml

@@ -45,7 +45,7 @@ namespace robot {
     Robot -up-> tempomat.Tempomat
     Robot -up-> sonar.Sonar
     Robot -up-> position.Point
-    Robot -down-> motionControl.MotionControl
+    Robot -down-> motionSubsystem.MotionControl
     Robot -down-> lightSubsystem.LightsControl
 }
 

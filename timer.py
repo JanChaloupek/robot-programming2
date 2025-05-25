@@ -26,7 +26,7 @@ class Timer:
         # spust časovač
         if timeout_ms is not None:
             self.timeout_ms = timeout_ms
-        self.__startTime = self.__getTime(start_time_ms)    
+        self.__startTime = self.__getTime(start_time_ms)
 
     def stopTimer(self) -> None:
         # zastav časovač
@@ -36,12 +36,15 @@ class Timer:
         # je časovač spuštěn?
         return self.__startTime is not None
 
+    def getTimeDiff(self, test_time_ms:int=None) -> int:
+        self.lastTimeDiff = ticks_diff(self.__getTime(test_time_ms), self.__startTime)
+        return self.lastTimeDiff
+
     def isTimeout(self, test_time_ms:int=None, timeout_ms:int=None) -> bool:
         # vyprsel timeout casovace v case 'time_ms'?
         if not self.isStarted():
             return False
-        diff_ms = ticks_diff(self.__getTime(test_time_ms), self.__startTime)
-        return diff_ms >= self.__getTimeout(timeout_ms)
+        return self.getTimeDiff(test_time_ms) >= self.__getTimeout(timeout_ms)
 
 class Period(Timer):
     # třída implementující periodický časovač

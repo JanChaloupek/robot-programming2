@@ -1,6 +1,6 @@
-from timer import Period
+from timer import Timer
 
-class RegulatorP(Period):
+class RegulatorP(Timer):
     # třída implementující P-regulátor
     def __init__(self, p:float, timeout_ms:int) -> None:
         self.__p = p
@@ -16,6 +16,7 @@ class RegulatorP(Period):
         # vypočti akční zásah
         error = inputNominal - inputActual
         changeValue = self.k(time_ms) * error
+        self.startTimer(time_ms)
         return changeValue
     
 class RegulatorPID(RegulatorP):

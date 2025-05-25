@@ -4,20 +4,32 @@ namespace regulator {
 
     class RegulatorP {
         - __p:float
+
         + __init__(p:float, timeout_ms:int) -> None
         + dT(time_ms:int) -> float
         + k(time_ms: int) -> float
         + getActionIntervention(time_ms:int, inputNominal:float, inputActual:float) -> float
     }
     note right of RegulatorP
-        Třída RegulatorP je potomkem třídy Period
+        Třída RegulatorP je potomkem třídy Timer
         Umí řídit regulaci veličiny přes P-regulátor
 
-        dT(time_ms) spočte rozdíl času (v sekundách) od minulého zavolání regulátoru
-        k(time_ms) vrátí korigovaný člen přes rozdíl času ( self.__p * self.dT(time_ms) )
-        getActionIntervention vypočte akční zásah regulátoru 
+        <b>__p</b> je zisk regulátoru
+
+        <b>__init__()</b> inicializuje regulátor a spustí casovač
+            <b>p</b> je zisk regulátoru
+            <b>timeout_ms</b> je čas vypršení casovače (opakování regulace)
+        <b>dT()</b> spočte rozdíl času (v sekundách) od minulého zavolání regulátoru (od spuštění casovače)
+        <b>k()</b> vrátí korigovaný člen přes rozdíl času ( self.__p * self.dT(time_ms) )
+            <b>time_ms</b> je čas v ms, který se použije pro výpočet rozdílu času
+            pokud není definovaný, použije se aktuální čas
+        <b>getActionIntervention()</b> spočte akční zásah regulátoru
+            <b>time_ms</b> je čas v ms, který se použije pro výpočet rozdílu času
+            <b>inputNominal</b> je požadovaná hodnota regulované veličiny
+            <b>inputActual</b> je aktuální hodnota regulované veličiny
+            vrátí akční zásah regulátoru (vypočtený přes P-regulátor)
     end note
-    RegulatorP <|-- timer.Period
+    RegulatorP <|-- timer.Timer
     
     class RegulatorPID {
         - __i:float
@@ -29,7 +41,21 @@ namespace regulator {
         Třída RegulatorPID je potomkem třídy RegulatorP
         Má řídit regulaci veličiny přes PID-regulátor - zatím nefunguje
 
-        getActionIntervention vypočte akční zásah regulátoru 
+        <b>__p</b> je zisk regulátoru
+        <b>__i</b> je zisk integrátoru
+        <b>__d</b> je zisk derivátoru 
+
+        <b>__init__()</b> inicializuje regulátor a spustí casovač
+            <b>p</b> je zisk regulátoru
+            <b>i</b> je zisk integrátoru
+            <b>d</b> je zisk derivátoru
+            <b>timeout_ms</b> je čas vypršení casovače (opakování regulace)
+
+        <b>getActionIntervention</b> vypočte akční zásah regulátoru
+            <b>time_ms</b> je čas v ms, který se použije pro výpočet rozdílu času
+            <b>inputNominal</b> je požadovaná hodnota regulované veličiny
+            <b>inputActual</b> je aktuální hodnota regulované veličiny
+            vrátí akční zásah regulátoru (vypočtený přes PID-regulátor)
     end note
     RegulatorPID <|-- RegulatorP
 }

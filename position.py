@@ -1,4 +1,4 @@
-from HardwarePlatform import TWO_PI, HALF_PI, PI
+from HardwarePlatform import TWO_PI, HALF_PI, PI, Display, lcd
 from timer import Timer
 from math import cos, sin, atan2, sqrt, degrees
 
@@ -6,55 +6,60 @@ class Point:
     x: float
     y: float
 
+    def __init__(self, x:float=0.0, y:float=0.0) -> None:
+        self.x = x
+        self.y = y
+
     def __str__(self) -> str:
         return "x: " + str(self.x) + " y: " + str(self.y)
 
-    def distance(self, point) -> float:
-        return sqrt((self.x - point.x)**2 + (self.y - point.y)**2)
+    def distance(self, point: 'Point') -> float:
+        return sqrt((point.y - self.y)**2 + (point.x - self.x)**2)
 
     def angle(self, point) -> float:
         return atan2(point.y - self.y, point.x - self.x)
 
-class Position:
-    point: Point
+class Position(Point):
     theta: float
 
-    def __init__(self, x:float=0.0, y:float=0.0, theta:float=0.0) -> None:
-        self.point = Point()
-        self.point.x = x
-        self.point.y = y
+    def __init__(self, x: float = 0.0, y: float = 0.0, theta: float = 0.0) -> None:
+        super().__init__(x, y)
         self.theta = theta
 
-    def __copyPosition(self, copyFrom) -> None:
-        self.point.x = copyFrom.point.x
-        self.point.y = copyFrom.point.y
-        self.theta = copyFrom.theta
-
     def __str__(self) -> str:
-        return "x:" + str(self.point.x) + " y:" + str(self.point.y) + " theta:" + str(degrees(self.theta))
+        return super().__str__() + " theta:" + str(degrees(self.theta))
 
-    def move_forward(self, distance:float=1.0) -> None:
-        self.point.x += distance * cos(self.theta)
-        self.point.y += distance * sin(self.theta)
+    def __move(self, distance:float) -> None:
+        self.x += distance * cos(self.theta)
+        self.y += distance * sin(self.theta)
 
-    def move_backward(self, distance:float=1.0) -> None:
-        self.point.x -= distance * cos(self.theta)
-        self.point.y -= distance * sin(self.theta)
+    def __turn(self, angle:float) -> None:
+        self.theta += angle
+        self.__normalizeTheta()
 
     def __normalizeTheta(self) -> None:
         self.theta = self.theta % TWO_PI
         if self.theta > PI:
             self.theta -= TWO_PI
 
-    def __turn(self, angle:float) -> None:
-        self.theta += angle
-        self.__normalizeTheta()
+    def move_forward(self, distance:float=1.0) -> None:
+        self.__move(distance)
+
+    def move_backward(self, distance:float=1.0) -> None:
+        self.__move(-distance)
 
     def turn_left(self, angle:float=HALF_PI) -> None:
         self.__turn(angle)
 
     def turn_right(self, angle:float=HALF_PI) -> None:
         self.__turn(-angle)
+
+    def showOnDisplay(self) -> None:
+        x = round(self.x)
+        y = round(self.y)
+        theta =  round(degrees(self.theta))
+        lcd.writePosition(x, y, theta)
+        Display.position(x, y)
 
 
 class Odometry(Position):
@@ -64,12 +69,14 @@ class Odometry(Position):
         self.__wheelbase = wheelbase
         self.__const = TWO_PI * wheelRadius / ticksPerCircle
         if init is None:
-            init = Position(x=0.0, y=0.0, theta=0.0)
+            init = Position()
         self.initPosition = init
         self.odometry_reinit()
 
     def odometry_reinit(self) -> None:
-        self.__copyPosition(self.initPosition)
+        self.x = self.initPosition.x
+        self.y = self.initPosition.y
+        self.theta = self.initPosition.theta
 
     def odometry_calculate(self, deltaTicks:tuple[int,int]) -> None:
         leftTicks, rightTicks = deltaTicks
@@ -79,15 +86,15 @@ class Odometry(Position):
         # pocitame smer jako by jsme se otocili o polovinu zmeny theta
         calculateTheta = self.theta + deltaTheta / 2
         # posun v obecnem prostoru
-        self.point.x += cos(calculateTheta) * deltaX
-        self.point.y += sin(calculateTheta) * deltaX
+        self.x += cos(calculateTheta) * deltaX
+        self.y += sin(calculateTheta) * deltaX
         self.theta += deltaTheta        
         self.__normalizeTheta()
 
     def calculate_directionToPoint(self, goal:Point) -> tuple[float, float]:
         # spocti vzdalenost a smer k cili
-        distance = self.point.distance(goal)
-        goalTheta = self.point.angle(goal)
+        distance = self.distance(goal)
+        goalTheta = self.angle(goal)
         deltaTheta = goalTheta - self.theta
         return distance, deltaTheta
 

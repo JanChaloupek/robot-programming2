@@ -10,19 +10,22 @@ namespace systempicoed {
         - redrawNeeded[bool[]]
         - __PICTOGRAMS{}
 
-        + initialize(cls): None
-        + updatePixelCondition(): bool
+        + __initialize(cls): None
+        + display_clear(): None
+        + display_pixel(col:int, row:int, color:int): None
+        + display_redraw(): None
+        + updatePixels(): bool
+        + updatePixel(): bool
+        + __updatePixelCondition(): bool
         + getSupplyVoltage(): float
         + display_SupplyVoltage(): None
         + __display_bitmap(x_pos:int, y_pos:int, width:int, lines:list[int]): None
-        + display_clear(): None
-        + display_decimalPoint(show:bool, x_poz:int, y_poz:int=0, color:int=9): None
         + __display_iconA(icon: str): None
-        + display_decimalPointAfterA(show:bool): None
         + __display_iconB(icon: str): None:
-        + display_decimalPointAfterB(show: bool): None
         + __display_iconC(icon: str): None
-        + display_decimalPointAfterC(show: bool): None
+        + __display_decimalPoint(show:bool, x_poz:int, y_poz:int=0, color:int=9): None
+        + display_decimalPointAfterA(show:bool): None
+        + display_decimalPointAfterB(show: bool): None
         + display_drive_mode(mode: str): None
         + display_position(x: int, y: int): None
         + display_senzors(obstacleLeft:bool, farLeft:bool, left:bool, midleLeft:bool, midle35:bool, midleRight:bool, right:bool, farRight:bool, obstacleRight:bool, bh:int, bl:int): None
@@ -30,17 +33,24 @@ namespace systempicoed {
     note bottom of System
         Třída System je množina statických funkcí.
 
-        Umí zobrazovat informace na displeji picedu na pozadí.
-        Musí se pravidelně volat funkce <b>updatePixels()</b>, která postupně překresluje pixely, které se od minule změnili.
-        Při spuštění aplikace se automaticky inicializují proměnné zavoláním <b>System.initialize()</b>
+        Umí zobrazovat informace na displeji picedu na pozadí a vyčíst velikost napájecího napětí.
+        Při spuštění aplikace se automaticky inicializují proměnné zavoláním <b>System.__initialize()</b>
 
-        System.display_SupplyVoltage() zobrazí přes všechny 3 symboly napájecí napětí robota
+        Je potřebné pravidelně volat funkci <b>updatePixels()</b>, která překresluje pixely, které se změnili.
+        Pokud je ihned potřebné zobrazit celý displej, zavolej <b>System.display_redraw()</b>.
+
+        <b>System.display_SupplyVoltage()</b> zobrazí přes všechny 3 symboly napájecí napětí robota
             Například "5.6V"
-        System.display_drive_mode() zobrazí jeden symbol uprostřed obrazovy robota. 
+        <b>System.display_clear()</b> vymaže displej robota
+
+        <b>System.display_pixel(col,row,color)</b> nastaví barvu pixelu na pozici (col,row) na barvu color
+        <b>System.updatePixels()</b> posílá postupně všechny pixely, které se změnili na displeji
+            pokud je potřeba překreslit celý displej, zavolej <b>System.display_redraw()</b>
+        <b>System.display_drive_mode(mode)</b> zobrazí jeden symbol uprostřed obrazovy robota. 
             Používá se na zobrazení módu činnosti nebo stavu.
-        System.display_position(x,y) zobrazí pozici robota (lokalizaci) na levém a pravém okraji displaje
+        <b>System.display_position(x,y)</b> zobrazí pozici robota (lokalizaci) na levém a pravém okraji displaje
             orientrace znaků je taková aby byli vidět správně, pokud se dívám zezadu na robota
-        System.display_senzors() zobrazí obraz senzorů čáry a blízkosti na posledním (6-tém) řádku robota
+        <b>System.display_senzors()</b> zobrazí obraz senzorů čáry a blízkosti na posledním (6-tém) řádku robota
             když se dívám zezadu na robota, bude to vidět jako horní řádek
     end note
 }

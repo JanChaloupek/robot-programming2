@@ -1,5 +1,4 @@
-from HardwarePlatform import button_a, ticks_ms, ticks_us, display
-from systempicoed import System
+from HardwarePlatform import button_a, ticks_ms, ticks_us, Display
 from SM import AbstractSM, Task, Step
 from du03_engine import Engine
 from senzors import Senzors
@@ -43,7 +42,7 @@ class LineSM(AbstractSM):
         # self.debug = True
 
     def __start__init(self) -> None:
-        System.display_drive_mode('s')
+        Display.drive_mode('s')
         self.setTickTime(100)
         print('Cekame na stisknuti tlacitka A')
 
@@ -85,30 +84,30 @@ class LineSM(AbstractSM):
     def __goStraight(self) -> None:
         self.__leftEngine.writePWM(self.__normalPwm)
         self.__rightEngine.writePWM(self.__normalPwm)
-        System.display_drive_mode('|')
+        Display.drive_mode('|')
         self.nextTask(self.__state_LineSituation)
 
     def __turnLeft(self) -> None:
         # pro zataceni vlevo musime levym kolem tocit mene
         self.__leftEngine.writePWM(self.__smallPwm)
         self.__rightEngine.writePWM(self.__maxPwm2 if self.__turnKoef > 3 else self.__maxPwm1)
-        System.display_drive_mode('\\')
+        Display.drive_mode('\\')
         self.nextTask(self.__state_LineSituation)
 
     def __turnRight(self) -> None:
         # pro zataceni vpravo musime pravym kolem tocit mene
         self.__leftEngine.writePWM(self.__maxPwm2 if self.__turnKoef > 3 else self.__maxPwm1)
         self.__rightEngine.writePWM(self.__smallPwm)
-        System.display_drive_mode('/')
+        Display.drive_mode('/')
         self.nextTask(self.__state_LineSituation)
 
     def __lost(self) -> None:
         self.__leftEngine.stop()
         self.__rightEngine.stop()
-        System.display_drive_mode('x')
+        Display.drive_mode('x')
         print('Ztratili jsme se.')
         self.nextTask(self.__state_start, skipTimeout=False)
 
     def __end__init(self) -> None:
-        System.display_drive_mode('E')
+        Display.drive_mode('E')
         print('Konec')

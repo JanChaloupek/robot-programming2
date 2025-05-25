@@ -12,7 +12,7 @@ namespace HardwarePlatform {
         + write(addr:int, buf:bytearray, repeat:bool=False) -> None
         + write_readinto(addr:int, write_buf:bytearray, read_buf:bytearray) -> None
     }
-    note top of I2C
+    note bottom of I2C
         Adapter I2C přebalující třídu z picoed-u.
         Objekt i2c je v picoedu už vytvořený, nemusí se inicializovat.
         Metoda init(freq, sda, scl) je tedy prázdná = nic nedělá
@@ -70,20 +70,79 @@ namespace HardwarePlatform {
         - WHEEL_DIAMETER = 0.067
         - ROBOT_DIAMETER = 0.15
         - i2c:I2C
-        - display
         - led
         + sleep(ms): None
         + ticks_ms(): int
         + ticks_us(): int
         + ticks_diff(ticks1:int, ticks2:int): int
         + time_pulse_us(pin, pulse_level: int, timeout_us=1_000_000): int
-
     }
-    note top of globals
+
+    globals -up-> PinADC
+    globals -up-> PinDigital
+    globals -up-> PinPWM
+    globals -right-> I2C
+
+    note bottom of globals
         Globální objekty a funkce
     end note    
 
-}
+    class Battery {
+        + getSupplyVoltage(): float
+    }
 
+    class Display {
+
+        - rowsDisp = 7
+        - colsDisp = 17
+        - pixelsMap[bytearray]
+        - redrawNeeded[bool[]]
+        - __PICTOGRAMS{}
+
+        + __initialize(cls): None
+        + clear(): None
+        + pixel(col:int, row:int, color:int): None
+        + redraw(): None
+        + updatePixels(): bool
+        + __updatePixel(): bool
+        + __updatePixelCondition(): bool
+        + display_SupplyVoltage(): None
+        + __bitmap(x_pos:int, y_pos:int, width:int, lines:list[int]): None
+        + __iconA(icon: str): None
+        + __iconB(icon: str): None:
+        + __iconC(icon: str): None
+        + __decimalPoint(show:bool, x_poz:int, y_poz:int=0, color:int=9): None
+        + decimalPointAfterA(show:bool): None
+        + decimalPointAfterB(show: bool): None
+        + drive_mode(mode: str): None
+        + position(x: int, y: int): None
+        + senzors(obstacleLeft:bool, farLeft:bool, left:bool, midleLeft:bool, midle35:bool, midleRight:bool, right:bool, farRight:bool, obstacleRight:bool, bh:int, bl:int): None
+    }
+    Display -up-> Battery
+
+    note bottom of Display
+        Třída Display je množina statických funkcí.
+
+        Umí zobrazovat informace na displeji picedu na pozadí a vyčíst velikost napájecího napětí.
+        Při spuštění aplikace se automaticky inicializují proměnné zavoláním <b>Display.__initialize()</b>
+
+        Je potřebné pravidelně volat funkci <b>updatePixels()</b>, která překresluje pixely, které se změnili.
+        Pokud je ihned potřebné zobrazit celý displej, zavolej <b>Display.redraw()</b>.
+
+        <b>Display.supplyVoltage()</b> zobrazí přes všechny 3 symboly napájecí napětí robota
+            Například "5.6V"
+        <b>Display.clear()</b> vymaže displej robota
+
+        <b>Display.pixel(col,row,color)</b> nastaví barvu pixelu na pozici (col,row) na barvu color
+        <b>Display.updatePixels()</b> posílá postupně všechny pixely, které se změnili na displeji
+            pokud je potřeba překreslit celý displej, zavolej <b>Display.redraw()</b>
+        <b>Display.drive_mode(mode)</b> zobrazí jeden symbol uprostřed obrazovy robota. 
+            Používá se na zobrazení módu činnosti nebo stavu.
+        <b>Display.position(x,y)</b> zobrazí pozici robota (lokalizaci) na levém a pravém okraji displaje
+            orientrace znaků je taková aby byli vidět správně, pokud se dívám zezadu na robota
+        <b>Display.senzors()</b> zobrazí obraz senzorů čáry a blízkosti na posledním (6-tém) řádku robota
+            když se dívám zezadu na robota, bude to vidět jako horní řádek
+    end note
+}
 
 @enduml

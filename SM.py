@@ -84,6 +84,7 @@ class AbstractSM:
         self.__running = False
         self.__tic = 0         # Task Id Counter
         self.debug = False
+        self.debugSKIP = False
         if not isinstance(tasks, list):
             # pokud nemame urceny seznam Tasku, zaciname Taskem start
             tasks = [self.__state_start]
@@ -128,8 +129,8 @@ class AbstractSM:
 
     def nextTask(self, task:Task=None, skipTimeout:bool=None) -> None:
         if skipTimeout is None:
-            # pokud neni Task predany, funguj postaru (bez preskoceni timeoutu)
-            skipTimeout = task is not None
+            # preskoc cas pokud aktualni task neni instance Step (tj. je to Task ale na to se ptat nemuzeme)
+            skipTimeout = not isinstance(self.__curTask, Step)
         if skipTimeout:
             self.__setPeriodTimeout(0)
         if task is not None:
@@ -148,6 +149,9 @@ class AbstractSM:
 
     def failureTask(self) -> None:
         self.__nextTask = self.__state_failure
+
+    def startTask(self) -> None:
+        self.__nextTask = self.__state_start
 
     def tick(self) -> None:
         if self.__running is False:
@@ -193,7 +197,7 @@ class AbstractSM:
             fce = getattr(self, n)
             fce()
         else:
-            if self.debug:
+            if self.debugSKIP:
                 print(f"({self.cpu_no}, {type(self).__name__})", ticks_ms(), n, '    --SKIP')
 
     def __setPeriodTimeout(self, n:int) -> None:
