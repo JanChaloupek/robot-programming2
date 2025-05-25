@@ -119,7 +119,6 @@ pin13 = PinPWM(P13)
 pin14 = PinDigital(P14)
 pin15 = PinDigital(P15)
 pin16 = PinPWM(P16)
-#pin16 = PinDigital(P16)
 
 def sleep(ms) -> None:
     time_sleep(ms / 1000)
@@ -242,9 +241,9 @@ class I2cLcd(LcdApi):
         self.putstr("{:3d}".format(theta))
 
     def writeOdometry(self, x:float, y:float, theta:int) -> None:
-        self.move_to(12, 2)
+        self.move_to(12, 1)
         self.putstr("{:5.3f}".format(x))
-        self.move_to(12, 3)
+        self.move_to(12, 2)
         self.putstr("{:5.3f}".format(y))
         self.move_to(12, 3)
         self.putstr("{:3d}".format(theta))
@@ -401,9 +400,9 @@ class Display:
     @staticmethod
     def number(num: int) -> None:
         number = "{:3d}".format(num)  # 3 znaky, pokud je číslo kratší, přidá mezery
-        Display.__iconA(number[0])
-        Display.__iconB(number[1])
-        Display.__iconC(number[2])
+        Display.iconA(number[0])
+        Display.iconB(number[1])
+        Display.iconC(number[2])
 
     @staticmethod
     def __bitmap(x_pos: int, y_pos: int, width: int, lines: list[int]) -> None:
