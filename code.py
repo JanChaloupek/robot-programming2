@@ -9,7 +9,22 @@ from SMcrossRoads import CrossRoads
 from position import Position
 from timer import Timer
 
+from time import sleep
+from picoed import button_a
+import pwmio
+from board import P1, LED
+
+
 if __name__ == "__main__": 
+
+    pwm = pwmio.PWMOut(LED) 
+    
+    while not button_a.was_pressed():
+        for cycle in range(0, 65535):  
+            pwm.duty_cycle = cycle  
+        for cycle in range(65534, 0, -1):  # Cycles through the PWM range backwards from 65534 to 0
+            pwm.duty_cycle = cycle 
+
 
     # lcd.obrazovka1()
     # while not button_a.was_pressed():
