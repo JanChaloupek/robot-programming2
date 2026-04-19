@@ -1,4 +1,4 @@
-from HardwarePlatform import ticks_ms, sleep, PI, button_b, Display, lcd
+from HardwarePlatform import ticks_ms, sleep, PI, button_b, Display
 from soundSubsystem import brzdeni, tutu, hello
 from senzors import LineSituationEnum
 from SM import AbstractSM, Task, Step
@@ -40,8 +40,8 @@ class CrossRoads(AbstractSM):
 
     def log(self, message: str) -> None:
         print(message)
-        lcd.clear()
-        lcd.putstr(message)
+        # lcd.clear()
+        # lcd.putstr(message)
 
     # Task('start') - definovano v AbstractSM
     def __start__init(self):

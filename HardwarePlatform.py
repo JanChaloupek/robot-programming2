@@ -248,7 +248,7 @@ class I2cLcd(LcdApi):
         self.move_to(12, 3)
         self.putstr("{:3d}".format(theta))
 
-lcd = I2cLcd(i2c, I2C_ADDR_LCD, LCD_NUM_ROWS, LCD_NUM_COLS)
+# lcd = I2cLcd(i2c, I2C_ADDR_LCD, LCD_NUM_ROWS, LCD_NUM_COLS)
 
 class Battery:
     @staticmethod

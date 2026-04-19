@@ -1,4 +1,4 @@
-from HardwarePlatform import i2c, I2C_ADDR_MOTION, ticks_ms, sleep
+from HardwarePlatform import i2c, I2C_ADDR_MOTION, ticks_ms, sleep, System, Display
 from calibrateFactors import CalibrateFactors
 from speedMeasure import Encoder, MeasureUnit
 from directions import DirectionEnum

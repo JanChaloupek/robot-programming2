@@ -9,10 +9,5 @@ if not button_a.is_pressed():
         led.toggle()
         sleep(1000)
     storage.remount("/", readonly=True)
-if not button_a.is_pressed():
-    for i in range(10):
-        led.toggle()
-        sleep(1000)
-    storage.remount("/", readonly=True)
 if not button_b.is_pressed():
     storage.remount("/", readonly=False)

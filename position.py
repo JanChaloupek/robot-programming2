@@ -1,7 +1,10 @@
-from HardwarePlatform import TWO_PI, HALF_PI, PI, Display, lcd
+from HardwarePlatform import TWO_PI, HALF_PI, PI, Display
 from timer import Timer
-from math import cos, sin, atan2, sqrt, degrees
+from math import cos, sin, atan2, sqrt, degrees, pi
 
+PI = pi	
+TWO_PI = 2*pi
+HALF_PI = pi/2
 class Point:
     x: float
     y: float
@@ -58,7 +61,7 @@ class Position(Point):
         x = round(self.x)
         y = round(self.y)
         theta =  round(degrees(self.theta))
-        lcd.writePosition(x, y, theta)
+        # lcd.writePosition(x, y, theta)
         Display.position(x, y)
 
 
